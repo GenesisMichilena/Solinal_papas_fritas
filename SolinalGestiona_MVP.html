@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solinal Gestiona — MVP</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1B4F8A;--blue2:#2E86C1;--green:#27AE60;--amber:#F39C12;--red:#E74C3C;--bg:#F8FAFC;--text:#1A1A2E;--card:#fff;--border:#E2E8F0;--muted:#64748B;--sidebar:210px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+/* TOPBAR */
+#topbar{height:50px;background:var(--blue);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.logo{color:#fff;font-weight:600;font-size:16px;letter-spacing:.3px;white-space:nowrap}.logo span{color:#93C6F4;font-size:12px;font-weight:400;margin-left:4px}
+.search-box{flex:1;max-width:300px;position:relative}.search-box input{width:100%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px 6px 32px;color:#fff;font-size:12px;outline:none}.search-box input::placeholder{color:rgba(255,255,255,.55)}.search-box i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);font-size:15px}
+.topright{margin-left:auto;display:flex;align-items:center;gap:8px}
+.nbell{background:rgba(255,255,255,.15);border:none;border-radius:7px;color:#fff;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;font-size:16px}.nbell:hover{background:rgba(255,255,255,.25)}.nbell .bdg{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;font-size:9px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.uchip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.15);border-radius:7px;padding:4px 12px 4px 5px;cursor:pointer;border:none;color:#fff}.uchip:hover{background:rgba(255,255,255,.25)}.uchip .av{width:28px;height:28px;border-radius:50%;background:#93C6F4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--blue)}.uchip .un{font-size:13px}.uchip .rt{font-size:11px;color:rgba(255,255,255,.65)}
+/* LAYOUT */
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nsec{padding:12px 12px 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:7px;cursor:pointer;margin:1px 6px;color:var(--muted);font-size:13px;transition:background .12s}.ni:hover{background:#F1F5F9}.ni.on{background:#EBF4FD;color:var(--blue);font-weight:600}.ni.on i{color:var(--blue)}.ni i{font-size:16px}.ni .bsm{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700}.ni .bsm.am{background:var(--amber)}
+#sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);text-align:center}
+/* MAIN */
+#content{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+.page{display:none}.page.on{display:block}
+.pghdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.pgtit{font-size:18px;font-weight:600;color:var(--text)}.pgsub{font-size:12px;color:var(--muted);margin-top:2px}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text);font-family:inherit;transition:background .12s}.btn:hover{background:#F1F5F9}
+.btn.prim{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.prim:hover{background:#154170}
+.btn.ok{background:var(--green);color:#fff;border-color:var(--green)}.btn.ok:hover{background:#1E8449}
+.btn.err{background:var(--red);color:#fff;border-color:var(--red)}.btn.err:hover{background:#C0392B}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.xs{padding:3px 8px;font-size:11px}
+/* STAT CARDS */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid var(--border)}.sc .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500}.sc .val{font-size:24px;font-weight:700}.sc .sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* CARDS */
+.card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.card h3{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--text)}
+/* TABLE */
+.dtab{width:100%;border-collapse:collapse}
+.dtab th{font-size:10px;font-weight:600;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);background:#F8FAFC;text-transform:uppercase;letter-spacing:.5px}
+.dtab td{padding:10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.dtab tr:hover td{background:#F8FAFC;cursor:pointer}.dtab tr:last-child td{border-bottom:none}
+/* STATUS BADGES */
+.sb{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.s-borrador{background:#EBF4FD;color:#1A5276}.s-revision{background:#FEF9E7;color:#7D6608}.s-aprobacion{background:#E8F8F5;color:#0E6655}.s-vigente{background:#EAFAF1;color:#1E8449}.s-rechazado{background:#FDEDEC;color:#922B21}.s-obsoleto{background:#F2F3F4;color:#626567}
+.tb{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;background:#EBF4FD;color:var(--blue);font-weight:600}
+/* ICON BUTTONS */
+.ibt{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:5px;display:inline-flex;font-size:14px}.ibt:hover{background:#F1F5F9;color:var(--text)}
+/* PROGRESS */
+.pbar{background:#F1F5F9;border-radius:4px;height:6px;overflow:hidden}.pbar .f{height:100%;border-radius:4px}
+/* PENDING CARDS */
+.pc{border-left:3px solid var(--amber);background:#fff;border-radius:0 8px 8px 0;border:1px solid var(--border);border-left-width:3px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:background .12s}.pc:hover{background:#F8FAFC}.pc .pt{font-size:13px;font-weight:600}.pc .pm{font-size:11px;color:var(--muted);margin-top:2px}.pc .pb{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:5px}
+/* AUDIT */
+.arow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.arow:last-child{border-bottom:none}.aico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}.arow .ab{flex:1}.arow .aa{font-size:13px}.arow .am{font-size:11px;color:var(--muted);margin-top:2px}
+/* WORKFLOW */
+.wstep{display:flex;gap:12px;margin-bottom:14px}.wstep .dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}.wstep .wr{flex:1}.wstep .wt{font-size:13px;font-weight:600}.wstep .ws{font-size:11px;color:var(--muted);margin-top:2px}
+.wd .dot{background:#EAFAF1;color:#1E8449}.wa .dot{background:#EBF4FD;color:var(--blue)}.wp .dot{background:#F1F5F9;color:var(--muted)}
+/* CLAUSE */
+.ci{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:7px;border:1px solid var(--border);margin-bottom:6px;font-size:12px}.ci .cc{font-weight:700;color:var(--blue);min-width:40px}
+/* USERS */
+.urow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px}
+.uav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}.uinfo{flex:1}.un{font-size:13px;font-weight:600}.ue{font-size:11px;color:var(--muted)}
+.rsel{padding:4px 8px;border-radius:6px;font-size:12px;border:1px solid var(--border);background:#fff;color:var(--text);font-family:inherit}
+/* FORM */
+.frow{margin-bottom:13px}.frow label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.frow input,.frow select,.frow textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);outline:none;font-family:inherit;transition:border .12s}
+.frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,79,138,.08)}
+.frow textarea{min-height:70px;resize:vertical}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* CONFIG */
+.tabrow{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tbtn{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;font-weight:500}.tbtn.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.pfx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pfx-item label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.pfx-item input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;color:var(--blue);text-align:center;font-family:inherit}
+/* PREVIEW */
+.prev-frame{background:#fff;border:1px solid var(--border);border-radius:6px;padding:24px;font-size:13px;line-height:1.6;color:#222;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.prev-hdr{border-bottom:2px solid var(--blue);padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start}
+.prev-ftr{border-top:1px solid #ddd;padding-top:8px;margin-top:14px;display:flex;justify-content:space-between;font-size:11px;color:#777}
+/* EDITOR */
+.ebar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--border);background:#F8FAFC;flex-wrap:wrap}
+.ebar span{font-size:12px;color:var(--muted)}.ebar strong{font-size:12px;color:var(--text)}
+.etb{display:flex;gap:2px;padding:7px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;background:#fff}
+.tb-btn{background:none;border:none;border-radius:5px;padding:4px 6px;cursor:pointer;color:var(--muted);font-size:15px;display:inline-flex;transition:background .1s}.tb-btn:hover{background:#F1F5F9;color:var(--text)}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.ebody{padding:20px 24px;min-height:300px;outline:none;font-size:14px;line-height:1.75;background:#fff}
+.ebody h1{font-size:20px;font-weight:700;margin-bottom:12px;color:var(--blue)}
+.ebody h2{font-size:15px;font-weight:700;margin:16px 0 8px;border-bottom:1px solid var(--border);padding-bottom:4px;color:var(--text)}
+.ebody h3{font-size:14px;font-weight:600;margin:12px 0 6px;color:var(--blue2)}
+.ebody p{margin-bottom:10px}.ebody ul,.ebody ol{margin:8px 0 8px 22px}
+.ebody table{width:100%;border-collapse:collapse;margin:12px 0}
+.ebody table th{background:#F8FAFC;padding:7px 10px;font-size:12px;border:1px solid var(--border);font-weight:600}
+.ebody table td{padding:7px 10px;border:1px solid var(--border);font-size:13px}
+.save-ind{font-size:11px;display:flex;align-items:center;gap:4px;color:var(--green);margin-left:auto}
+.info-tip{background:#EBF4FD;border-radius:7px;padding:10px 12px;font-size:12px;color:#1A5276;display:flex;align-items:flex-start;gap:8px;margin-top:8px}
+/* AI PANEL */
+.ai-box{background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.ai-hdr{background:linear-gradient(135deg,var(--blue),var(--blue2));padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.ai-hdr h3{color:#fff;font-size:14px;font-weight:600}
+.ai-msgs{padding:12px;display:flex;flex-direction:column;gap:7px;max-height:240px;overflow-y:auto}
+.amsg{padding:9px 12px;border-radius:8px;font-size:12px;line-height:1.55}
+.amsg.sys{background:#EBF4FD;color:#1A5276;border-left:3px solid var(--blue)}
+.amsg.usr{background:#F1F5F9;color:var(--text);align-self:flex-end;max-width:85%;border-radius:8px 8px 2px 8px}
+.amsg.ai-r{background:#fff;border:1px solid var(--border);color:var(--text)}
+.amsg .ma{display:flex;gap:6px;margin-top:8px}
+.ai-qa{padding:10px 12px;border-top:1px solid var(--border);background:#FAFBFC}
+.ai-qa p{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.6px}
+.qa-btn{display:block;width:100%;text-align:left;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;margin-bottom:4px;color:var(--text);font-family:inherit;transition:all .1s}.qa-btn:hover{background:#EBF4FD;border-color:var(--blue2);color:var(--blue)}
+.ai-inp{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:7px;background:#fff}
+.ai-inp input{flex:1;padding:7px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none;font-family:inherit;transition:border .12s}.ai-inp input:focus{border-color:var(--blue)}
+.ai-inp button{background:var(--blue);border:none;border-radius:7px;color:#fff;width:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}.ai-inp button:hover{background:#154170}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:14px;border:1px solid var(--border);width:560px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal-sm{width:480px}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-hdr h2{font-size:15px;font-weight:700}
+.modal-body{padding:20px}
+.modal-ftr{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--text);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;display:none;align-items:center;gap:9px;box-shadow:0 4px 16px rgba(0,0,0,.2);min-width:220px}
+#toast.ok-t{background:var(--green)}#toast.err-t{background:var(--red)}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">SOLINAL <span>Gestiona</span></div>
+  <div class="search-box">
+    <i class="ti ti-search"></i>
+    <input type="text" placeholder="Buscar documentos, códigos, normas...">
+  </div>
+  <div class="topright">
+    <button class="nbell" onclick="showT('3 notificaciones: 2 revisiones, 1 aprobación pendiente','ok-t')" title="Notificaciones">
+      <i class="ti ti-bell"></i>
+      <span class="bdg">3</span>
+    </button>
+    <button class="uchip" onclick="cycleRole()" title="Haz clic para cambiar de rol">
+      <div class="av" id="uAv">MA</div>
+      <span class="un" id="uName">María Andrés</span>
+      <span class="rt" id="uRole">· Administrador</span>
+    </button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div id="body">
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nsec">Principal</div>
+  <div class="ni on" id="ni-dash" onclick="goPage('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+  <div class="ni" id="ni-docs" onclick="goPage('docs')"><i class="ti ti-files"></i> Documentos <span class="bsm am">3</span></div>
+  <div class="ni" id="ni-edit" onclick="goPage('edit')"><i class="ti ti-file-text"></i> Editor</div>
+  <div class="nsec">Sistema</div>
+  <div class="ni" id="ni-comp" onclick="goPage('comp')"><i class="ti ti-shield-check"></i> Cumplimiento ISO</div>
+  <div class="ni" id="ni-users" onclick="goPage('users')"><i class="ti ti-users"></i> Usuarios</div>
+  <div class="ni" id="ni-cfg" onclick="goPage('cfg')"><i class="ti ti-settings"></i> Configuración</div>
+  <div class="ni" id="ni-audit" onclick="goPage('audit')"><i class="ti ti-list-search"></i> Audit Trail</div>
+  <div id="sidebar-footer">Solinal Gestiona v1.0 MVP</div>
+</nav>
+
+<!-- CONTENT -->
+<div id="content">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="page on" id="pg-dash">
+  <div class="pghdr">
+    <div>
+      <div class="pgtit">Dashboard</div>
+      <div class="pgsub" id="dgreet">Bienvenida, María. Tienes 3 documentos pendientes de acción.</div>
+    </div>
+    <button class="btn prim" onclick="openNewDoc()"><i class="ti ti-plus"></i> Nuevo documento</button>
+  </div>
+  <div class="sgrid">
+    <div class="sc"><div class="lbl">Total documentos</div><div class="val" style="color:var(--blue)">47</div><div class="sub">+3 este mes</div></div>
+    <div class="sc"><div class="lbl">Vigentes</div><div class="val" style="color:var(--green)">31</div><div class="sub">66% del total</div></div>
+    <div class="sc"><div class="lbl">En proceso</div><div class="val" style="color:var(--amber)">9</div><div class="sub">Borrador + revisión</div></div>
+    <div class="sc"><div class="lbl">Vencidos revisión</div><div class="val" style="color:var(--red)">4</div><div class="sub">Requieren actualización</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <h3><i class="ti ti-clock" style="color:var(--amber)"></i> Pendientes de mi acción</h3>
+      <div class="pc" onclick="goPage('edit')">
+        <div class="pt">PRO-CAL-008 — Calibración de equipos</div>
+        <div class="pm">Asignado para revisión · Calidad</div>
+        <div class="pb" style="color:var(--red)"><i class="ti ti-alert-triangle"></i> Vence hoy</div>
+      </div>
+      <div class="pc" onclick="openApprove()">
+        <div class="pt">POL-GER-003 — Política de Inocuidad</div>
+        <div class="pm">Esperando tu aprobación · Gerencia</div>
+        <div class="pb" style="color:var(--blue)"><i class="ti ti-circle-check"></i> Lista para aprobar</div>
+      </div>
+      <div class="pc" onclick="goPage('edit')" style="border-left-color:var(--red)">
+        <div class="pt">INS-PRO-012 — Instructivo Limpieza CIP</div>
+        <div class="pm">Rechazado — requiere corrección</div>
+        <div class="pb" style="color:var(--red)"><i class="ti ti-x"></i> Rechazado</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="ti ti-chart-pie" style="color:var(--blue)"></i> Cumplimiento normativo</h3>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>ISO 9001:2015 — Calidad</span><span style="font-weight:700;color:var(--blue)">72%</span></div>
+        <div class="pbar"><div class="f" style="width:72%;background:var(--blue)"></div></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>ISO 22000:2018 — Inocuidad</span><span style="font-weight:700;color:var(--amber)">48%</span></div>
+        <div class="pbar"><div class="f" style="width:48%;background:var(--amber)"></div></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>ISO 14001:2015 — Ambiental</span><span style="font-weight:700;color:var(--green)">85%</span></div>
+        <div class="pbar"><div class="f" style="width:85%;background:var(--green)"></div></div>
+      </div>
+      <button class="btn sm" style="width:100%" onclick="goPage('comp')">Ver detalle de cumplimiento →</button>
+    </div>
+    <div class="card">
+      <h3><i class="ti ti-files" style="color:var(--blue)"></i> Documentos recientes</h3>
+      <table class="dtab">
+        <thead><tr><th>Código</th><th>Título</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr onclick="openDoc('PRO-CAL-009')"><td style="font-family:monospace;font-size:12px">PRO-CAL-009</td><td>Control de Calidad — Producto Terminado</td><td><span class="sb s-borrador">Borrador</span></td></tr>
+          <tr onclick="openApprove()"><td style="font-family:monospace;font-size:12px">POL-GER-003</td><td>Política de Inocuidad Alimentaria</td><td><span class="sb s-aprobacion">En aprobación</span></td></tr>
+          <tr onclick="openDoc('MAN-CAL-001')"><td style="font-family:monospace;font-size:12px">MAN-CAL-001</td><td>Manual del SGC</td><td><span class="sb s-vigente">Vigente</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3><i class="ti ti-activity" style="color:var(--blue)"></i> Actividad reciente</h3>
+      <div class="arow"><div class="aico" style="background:#EAFAF1;color:#1E8449"><i class="ti ti-check"></i></div><div class="ab"><div class="aa">MAN-CAL-001 aprobado y publicado — v3.1</div><div class="am">Carlos Ruiz · hace 2 horas</div></div></div>
+      <div class="arow"><div class="aico" style="background:#EBF4FD;color:var(--blue)"><i class="ti ti-edit"></i></div><div class="ab"><div class="aa">PRO-CAL-009 editado — sección 4.2 modificada</div><div class="am">María Andrés · hace 5 horas</div></div></div>
+      <div class="arow"><div class="aico" style="background:#FEF9E7;color:#7D6608"><i class="ti ti-send"></i></div><div class="ab"><div class="aa">POL-GER-003 enviado a aprobación</div><div class="am">Ana Torres · hace 1 día</div></div></div>
+      <div class="arow"><div class="aico" style="background:#FDEDEC;color:#922B21"><i class="ti ti-x"></i></div><div class="ab"><div class="aa">INS-PRO-012 rechazado — "Falta sección de verificación"</div><div class="am">Carlos Ruiz · hace 2 días</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DOCUMENTOS ===== -->
+<div class="page" id="pg-docs">
+  <div class="pghdr">
+    <div><div class="pgtit">Documentos</div><div class="pgsub">Catálogo completo del sistema de gestión</div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="fSt" onchange="renderDocs()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:#fff;font-family:inherit">
+        <option value="">Todos los estados</option>
+        <option>Borrador</option><option>En Revisión</option><option>En Aprobación</option><option>Vigente</option><option>Rechazado</option>
+      </select>
+      <select id="fTp" onchange="renderDocs()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:#fff;font-family:inherit">
+        <option value="">Todos los tipos</option>
+        <option>Procedimiento</option><option>Política</option><option>Instructivo</option><option>Manual</option><option>Checklist</optio
