@@ -186,26 +186,6 @@ export default function LoginPage() {
             <Button type="submit" size="lg" className="mt-1 font-bold">
               Iniciar sesión
             </Button>
-
-            <div className="flex flex-col items-center gap-1.5 text-sm">
-              <button
-                type="button"
-                onClick={() => handleUnavailable("Recuperar contraseña")}
-                className="font-semibold hover:text-primary hover:underline"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-              <p className="text-navy-foreground/60">
-                ¿Aún no tienes una cuenta?{" "}
-                <button
-                  type="button"
-                  onClick={() => handleUnavailable("Registro")}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  ¡Regístrate!
-                </button>
-              </p>
-            </div>
           </form>
 
 
