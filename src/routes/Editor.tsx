@@ -15,7 +15,13 @@ import { RegulationBanner } from "@/features/editor/RegulationBanner";
 import { ScannerDialog } from "@/features/editor/ScannerDialog";
 import { SummaryDialog } from "@/features/editor/SummaryDialog";
 import { VersionHistoryDialog } from "@/features/editor/VersionHistoryDialog";
-import { mergeResolutionText, regulationUpdateText, scannerImportText } from "@/features/editor/aiEngine";
+import {
+  mergeResolutionText,
+  NORMA_CON_CAMBIO_PENDIENTE,
+  REGULATION_UPDATE_MARKER,
+  regulationUpdateText,
+  scannerImportText,
+} from "@/features/editor/aiEngine";
 
 /** Port of legacy js/editor.js — "Editor & Asistente IA" page (pg-edit). */
 export default function EditorPage() {
@@ -42,6 +48,27 @@ export default function EditorPage() {
   useEffect(() => setCodeDraft(doc?.code ?? ""), [doc?.code]);
 
   const [regulationBannerVisible, setRegulationBannerVisible] = useState(false);
+
+  // Auto-alert: opening a document filed under a norma with a pending
+  // international update shows the regulatory-change banner right away,
+  // instead of requiring the manual "Simular cambio de ley" trigger.
+  useEffect(() => {
+    if (!doc) return;
+    const affected =
+      doc.norma === NORMA_CON_CAMBIO_PENDIENTE && !doc.content.includes(REGULATION_UPDATE_MARKER);
+    setRegulationBannerVisible(affected);
+    if (affected) {
+      toast.warning(
+        `El documento ${doc.code} está regido por ${doc.norma}, una normativa con actualización internacional pendiente.`,
+      );
+      dispatch({
+        type: "ADD_AUDIT_LOG",
+        payload: { action: `Recibió alerta de actualización de norma ${doc.norma} al abrir ${doc.code}` },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.code]);
+
   const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const [scannerModalOpen, setScannerModalOpen] = useState(false);
