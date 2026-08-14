@@ -20,14 +20,28 @@ export default function Usuarios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [defaultRole, setDefaultRole] = useState<RoleName>("Elaborador");
 
-  const canManage = state.session.activeRole !== "Lector";
+  // Only Administrador may reassign roles or register new users — creating a
+  // user also assigns its initial role (see NewUserDialog), so both actions
+  // share the same gate.
+  const canManage = state.session.activeRole === "Administrador";
 
   function openDialogFor(role: RoleName) {
+    if (!canManage) return;
     setDefaultRole(role);
     setDialogOpen(true);
   }
 
   function handleRoleChange(userName: string, role: RoleName) {
+    if (!canManage) {
+      toast.error("Solo un Administrador puede reasignar roles.");
+      dispatch({
+        type: "ADD_AUDIT_LOG",
+        payload: {
+          action: `Intento no autorizado de cambiar el rol de ${userName} por ${state.session.activeUser} (Rol: ${state.session.activeRole})`,
+        },
+      });
+      return;
+    }
     // UPDATE_USER_ROLE already syncs session.activeRole when userName is
     // the active user, mirroring legacy dropCard()'s live permission update.
     dispatch({ type: "UPDATE_USER_ROLE", payload: { name: userName, role } });
@@ -46,8 +60,9 @@ export default function Usuarios() {
             Usuarios y Roles Organizacionales
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Control de accesos y flujo documental. Reasigna el rol de cada persona
-            desde su tarjeta para aplicar el cambio de inmediato.
+            {canManage
+              ? "Control de accesos y flujo documental. Reasigna el rol de cada persona desde su tarjeta para aplicar el cambio de inmediato."
+              : "Control de accesos y flujo documental. Solo un Administrador puede reasignar roles o registrar nuevos usuarios."}
           </p>
         </div>
         {canManage && (

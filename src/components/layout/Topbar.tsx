@@ -30,16 +30,6 @@ export function Topbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
-        <button
-          type="button"
-          className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Notificaciones"
-        >
-          <Bell className="size-[18px]" />
-          <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-            3
-          </span>
-        </button>
 
         <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
           <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
