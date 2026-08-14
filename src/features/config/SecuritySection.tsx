@@ -50,7 +50,7 @@ export function SecuritySection({
           <div>
             <Label htmlFor="config-2fa-toggle">Doble factor de autenticación (2FA)</Label>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Al activarse, se solicitará un token PIN en cada cambio de perfil/rol.
+              Al activarse, se solicitará un token PIN adicional al iniciar sesión.
             </p>
           </div>
           <Switch

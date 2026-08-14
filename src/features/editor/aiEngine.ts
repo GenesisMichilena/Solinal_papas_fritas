@@ -52,9 +52,17 @@ export const scannerImportText =
   new Date().toISOString().slice(0, 10) +
   "\n- Inspector: Erick Murillo\n- Resultado del Control: Limpieza CIP completada de forma óptima sin alérgenos.";
 
+/** Norma with a pending international update — any document filed under it triggers
+ * the regulatory-change alert automatically when opened in the Editor. */
+export const NORMA_CON_CAMBIO_PENDIENTE = "ISO 22000:2018";
+
+/** Marker text used to detect whether a document's content already has the
+ * regulatory update applied, so the alert doesn't reappear after "Aplicar cambios". */
+export const REGULATION_UPDATE_MARKER = "[ACTUALIZACIÓN REGULATORIA AUTOMÁTICA ISO 22000:2026]";
+
 /** Port of applyNormativeUpdateInEditor's injected text block. */
 export const regulationUpdateText =
-  "\n\n[ACTUALIZACIÓN REGULATORIA AUTOMÁTICA ISO 22000:2026]\n- Se incorpora la enmienda de mitigación del cambio climático y controles ambientales en el plan de inocuidad.";
+  `\n\n${REGULATION_UPDATE_MARKER}\n- Se incorpora la enmienda de mitigación del cambio climático y controles ambientales en el plan de inocuidad.`;
 
 /** Port of confirmMergeSimulated's injected text block. */
 export const mergeResolutionText =

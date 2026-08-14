@@ -1,35 +1,22 @@
-import { useState } from "react";
 import { Bell, Search } from "lucide-react";
 import { useAppState } from "@/context/AppStateContext";
-import { TwoFactorDialog } from "./TwoFactorDialog";
 
 /**
  * Topbar — based on the legacy #topbar (search box, notification bell,
- * user chip with avatar/name/role). Clicking the user chip cycles the
- * active role, same as the legacy `cycleRole()`
- * (reference/legacy_vanilla/js/navigation.js). When
- * `config.twoFactorEnabled` is on (Configuracion > Seguridad), the switch
- * is gated behind a 2FA PIN challenge first, same as legacy G10 Scenario 2
- * — see TwoFactorDialog.tsx.
+ * user chip with avatar/name/role). The user chip is now a read-only
+ * display of who's logged in — switching users happens by logging out
+ * and signing back in as a different role (see Login.tsx), instead of
+ * cycling roles in place.
  */
 export function Topbar() {
-  const { state, dispatch } = useAppState();
+  const { state } = useAppState();
   const { activeUser, activeRole } = state.session;
-  const [twoFactorOpen, setTwoFactorOpen] = useState(false);
   const initials = activeUser
     .split(" ")
     .map((w) => w[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-  function handleRoleChipClick() {
-    if (state.config.twoFactorEnabled) {
-      setTwoFactorOpen(true);
-      return;
-    }
-    dispatch({ type: "CYCLE_ROLE" });
-  }
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card px-6">
@@ -54,11 +41,7 @@ export function Topbar() {
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleRoleChipClick}
-          className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted"
-        >
+        <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
           <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
             {initials}
           </span>
@@ -70,10 +53,8 @@ export function Topbar() {
               · {activeRole}
             </span>
           </span>
-        </button>
+        </div>
       </div>
-
-      <TwoFactorDialog open={twoFactorOpen} onOpenChange={setTwoFactorOpen} />
     </header>
   );
 }

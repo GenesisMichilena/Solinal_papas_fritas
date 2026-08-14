@@ -388,11 +388,11 @@ export const seedConfig: OrgConfig = {
   doubleApproval: "critical",
 };
 
-/** Initial active session values (window.state.activeRole / activeUser / roleIndex / etc). */
+/** Initial active session values (window.state.activeRole / activeUser / etc). */
 export const initialSession = {
+  isAuthenticated: false,
   activeRole: "Administrador" as RoleName,
   activeUser: "Erick Murillo",
-  roleIndex: 0,
   isLocked: false,
   failedAttempts: 0,
   activeDocCode: "PRO-CAL-009",
