@@ -61,9 +61,10 @@ export function TemplateDetailDialog({ template, onOpenChange }: TemplateDetailD
               <div className="mb-1.5 text-xs font-semibold text-muted-foreground">
                 Estructura del contenido
               </div>
-              <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-xs leading-relaxed">
-                {template.content}
-              </pre>
+              <div
+                className="rounded-md bg-muted p-3 text-xs leading-relaxed [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:py-0.5"
+                dangerouslySetInnerHTML={{ __html: template.content }}
+              />
             </div>
 
             <DialogFooter>

@@ -1,6 +1,8 @@
-import { Info, Lightbulb } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Info, Lightbulb } from "lucide-react";
 
 import type { SolinalDocument } from "@/data/seed";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { buildEditorGuide, type GuideCard } from "./aiEngine";
 
 const toneClass: Record<GuideCard["tone"], string> = {
@@ -17,22 +19,30 @@ const titleClass: Record<GuideCard["tone"], string> = {
   amber: "text-status-warning",
 };
 
-/** Port of legacy js/editor.js rebuildEditorLeftGuide — left column of the editor. */
+/** Port of legacy js/editor.js rebuildEditorLeftGuide, now folded into a
+ * collapsible card in the right column (above AiToolbox) instead of its
+ * own permanent left column. */
 export function GuidePanel({ doc }: { doc: SolinalDocument }) {
+  const [open, setOpen] = useState(false);
   const cards = buildEditorGuide(doc);
 
   return (
-    <div className="flex min-h-[500px] flex-col gap-3.5 rounded-2xl border border-border bg-card p-4">
-      <div>
-        <h4 className="mb-2 text-xs font-extrabold uppercase tracking-wide text-primary">
-          Guía &amp; plantilla
-        </h4>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Indicaciones de estructura e integración en tiempo real para tu documento.
-        </p>
-      </div>
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-2xl border border-border bg-card p-4">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 text-left">
+        <div>
+          <h4 className="text-xs font-extrabold uppercase tracking-wide text-primary">
+            Guía &amp; plantilla
+          </h4>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Indicaciones de estructura e integración en tiempo real para tu documento.
+          </p>
+        </div>
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </CollapsibleTrigger>
 
-      <div className="grid gap-3">
+      <CollapsibleContent className="mt-3 grid gap-3">
         {cards.map((card, i) => (
           <div key={i} className={`rounded-xl p-3 transition-colors ${toneClass[card.tone]}`}>
             <strong className={`mb-1 flex items-center gap-1.5 text-xs ${titleClass[card.tone]}`}>
@@ -43,7 +53,7 @@ export function GuidePanel({ doc }: { doc: SolinalDocument }) {
             <span className="text-[11px] leading-relaxed text-muted-foreground">{card.body}</span>
           </div>
         ))}
-      </div>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

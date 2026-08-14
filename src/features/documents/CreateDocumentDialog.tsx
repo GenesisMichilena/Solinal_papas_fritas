@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { documentTypeOptions, normaOptions } from "./docStyles";
+import { documentAreas, documentTypeOptions, nextDocumentCode, normaOptions } from "./docStyles";
 
 /** Port of legacy js/templates.js openCreateDoc / templateChanged / createDocument. */
 
@@ -37,9 +37,9 @@ interface CreateDocumentDialogProps {
 
 const emptyForm = {
   templateKey: "",
-  code: "",
   title: "",
   type: "Procedimiento" as DocumentType,
+  area: documentAreas[0].code,
   norma: "ISO 9001:2015" as (typeof normaOptions)[number],
   description: "",
   critical: false,
@@ -76,22 +76,23 @@ export function CreateDocumentDialog({
       ...f,
       templateKey: key,
       title: `Borrador — ${template.name}`,
-      code: `PRO-${template.type.slice(0, 3).toUpperCase()}-010`,
       type: template.type,
       norma: template.norma as (typeof normaOptions)[number],
       description: template.desc,
     }));
   }
 
+  const previewCode = nextDocumentCode(form.type, form.area, state.documents);
+
   function handleCreate() {
-    const code = form.code.trim();
     const title = form.title.trim();
-    if (!code || !title) {
-      toast.error("Código y título son necesarios.");
+    if (!title) {
+      toast.error("El título es necesario.");
       return;
     }
 
     const template = selectedTemplate;
+    const code = nextDocumentCode(form.type, form.area, state.documents);
     const newDoc: SolinalDocument = {
       code,
       title,
@@ -152,15 +153,6 @@ export function CreateDocumentDialog({
             </div>
 
             <div className="grid gap-1.5">
-              <Label>Código de control</Label>
-              <Input
-                placeholder="Ej. PRO-CAL-010"
-                value={form.code}
-                onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-              />
-            </div>
-
-            <div className="grid gap-1.5">
               <Label>Tipo documental</Label>
               <Select
                 value={form.type}
@@ -177,6 +169,30 @@ export function CreateDocumentDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Área / Departamento</Label>
+              <Select
+                value={form.area}
+                onValueChange={(v) => setForm((f) => ({ ...f, area: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {documentAreas.map((a) => (
+                    <SelectItem key={a.code} value={a.code}>
+                      {a.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Código de control</Label>
+              <Input value={previewCode} readOnly disabled className="font-mono font-bold" />
             </div>
 
             <div className="grid gap-1.5">

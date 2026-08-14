@@ -13,7 +13,9 @@ export interface ChatReply {
   insertText: string;
 }
 
-/** Port of sendPromptToAI's branching + insertProposedTextToEditor. */
+/** Port of sendPromptToAI's branching + insertProposedTextToEditor.
+ * `insertText` is HTML, appended directly into the contentEditable
+ * document body (see ContentEditor.tsx). */
 export function getChatReply(prompt: string): ChatReply {
   const lower = prompt.toLowerCase();
   if (lower.includes("inocuidad") || lower.includes("haccp")) {
@@ -21,14 +23,17 @@ export function getChatReply(prompt: string): ChatReply {
       text: "He redactado una propuesta de control crítico HACCP adaptada a Solinal. Secciones: 1. Puntos Críticos de Control (PCC), 2. Límites Críticos y 3. Sistema de Vigilancia.",
       actionLabel: "Insertar propuesta",
       insertText:
-        "\n\n[PROPUESTA IA - PLAN HACCP]\n1. Puntos Críticos (PCC): Fritura de papas.\n2. Límites Críticos: Humedad < 2%, Temperatura > 175°C.\n3. Vigilancia: Sensor digital calibrado y registro de bitácora por hora.",
+        "<p><strong>[PROPUESTA IA - PLAN HACCP]</strong></p><ul>" +
+        "<li><strong>Puntos Críticos (PCC):</strong> Fritura de papas.</li>" +
+        "<li><strong>Límites Críticos:</strong> Humedad &lt; 2%, Temperatura &gt; 175°C.</li>" +
+        "<li><strong>Vigilancia:</strong> Sensor digital calibrado y registro de bitácora por hora.</li></ul>",
     };
   }
   return {
     text: "Basado en el contexto de tu consulta, he generado la sección solicitada conforme a los estándares de auditoría de la norma ISO.",
     actionLabel: "Insertar texto",
     insertText:
-      "\n\n[SECCIÓN GENERADA CON IA]\nDefinición del procedimiento operativo: Todos los controles de muestreo deben registrarse en tiempo real usando firmas electrónicas del elaborador a cargo.",
+      "<p><strong>[SECCIÓN GENERADA CON IA]</strong></p><p>Definición del procedimiento operativo: Todos los controles de muestreo deben registrarse en tiempo real usando firmas electrónicas del elaborador a cargo.</p>",
   };
 }
 
@@ -46,11 +51,14 @@ export function multiDocSummaryText(selectedCodes: string[]): string {
   );
 }
 
-/** Port of triggerScanner's injected text block. */
+/** Port of triggerScanner's injected text block (HTML, appended to the
+ * contentEditable document body). */
 export const scannerImportText =
-  "\n\n[DATOS IMPORTADOS DE FORMATO FÍSICO ESCANEADO]\n- Código de Registro: REG-FIS-099\n- Fecha de Inspección: " +
-  new Date().toISOString().slice(0, 10) +
-  "\n- Inspector: Erick Murillo\n- Resultado del Control: Limpieza CIP completada de forma óptima sin alérgenos.";
+  "<p><strong>[DATOS IMPORTADOS DE FORMATO FÍSICO ESCANEADO]</strong></p><ul>" +
+  "<li><strong>Código de Registro:</strong> REG-FIS-099</li>" +
+  `<li><strong>Fecha de Inspección:</strong> ${new Date().toISOString().slice(0, 10)}</li>` +
+  "<li><strong>Inspector:</strong> Erick Murillo</li>" +
+  "<li><strong>Resultado del Control:</strong> Limpieza CIP completada de forma óptima sin alérgenos.</li></ul>";
 
 /** Norma with a pending international update — any document filed under it triggers
  * the regulatory-change alert automatically when opened in the Editor. */
@@ -60,13 +68,14 @@ export const NORMA_CON_CAMBIO_PENDIENTE = "ISO 22000:2018";
  * regulatory update applied, so the alert doesn't reappear after "Aplicar cambios". */
 export const REGULATION_UPDATE_MARKER = "[ACTUALIZACIÓN REGULATORIA AUTOMÁTICA ISO 22000:2026]";
 
-/** Port of applyNormativeUpdateInEditor's injected text block. */
+/** Port of applyNormativeUpdateInEditor's injected text block (HTML,
+ * appended to the contentEditable document body). */
 export const regulationUpdateText =
-  `\n\n${REGULATION_UPDATE_MARKER}\n- Se incorpora la enmienda de mitigación del cambio climático y controles ambientales en el plan de inocuidad.`;
+  `<p><strong>${REGULATION_UPDATE_MARKER}</strong></p><ul><li>Se incorpora la enmienda de mitigación del cambio climático y controles ambientales en el plan de inocuidad.</li></ul>`;
 
 /** Port of confirmMergeSimulated's injected text block. */
 export const mergeResolutionText =
-  "\n- Medición con termómetro infrarrojo calibrado. (Fusión consolidada)";
+  "<ul><li>Medición con termómetro infrarrojo calibrado. (Fusión consolidada)</li></ul>";
 
 /** Port of rebuildEditorLeftGuide — left column guide/template panel copy. */
 export interface GuideCard {

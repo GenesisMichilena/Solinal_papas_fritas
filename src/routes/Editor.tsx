@@ -44,9 +44,6 @@ export default function EditorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doc?.code]);
 
-  const [codeDraft, setCodeDraft] = useState(doc?.code ?? "");
-  useEffect(() => setCodeDraft(doc?.code ?? ""), [doc?.code]);
-
   const [regulationBannerVisible, setRegulationBannerVisible] = useState(false);
 
   // Auto-alert: opening a document filed under a norma with a pending
@@ -123,30 +120,22 @@ export default function EditorPage() {
 
   // --- guardar nueva versión (G02 Scenario 1) -------------------------------
   function handleSaveVersion() {
-    const code = codeDraft.trim();
-    const title = doc.title.trim();
-    if (!code || !title) {
-      toast.error("El código y el título del documento son requeridos.");
-      return;
-    }
     const currentVer = parseFloat(doc.version.replace("v", ""));
     const nextVer = `v${(currentVer + 0.1).toFixed(1)}`;
-    const revisionEntry = `${doc.version} - Modificado el ${new Date().toISOString().slice(0, 10)} por ${activeUser}: ${title}`;
+    const revisionEntry = `${doc.version} - Modificado el ${new Date().toISOString().slice(0, 10)} por ${activeUser}: ${doc.title}`;
 
     dispatch({
       type: "UPDATE_DOCUMENT",
       payload: {
         code: doc.code,
         changes: {
-          code,
           version: nextVer,
           revisiones: [revisionEntry, ...doc.revisiones],
         },
       },
     });
-    dispatch({ type: "SET_ACTIVE_DOC", payload: { code } });
     toast.success(`Nueva versión ${nextVer} guardada con éxito.`);
-    audit(`Creó la versión ${nextVer} del documento ${code}`);
+    audit(`Creó la versión ${nextVer} del documento ${doc.code}`);
   }
 
   // --- comentarios (G02 Scenario 4) -----------------------------------------
@@ -199,7 +188,10 @@ export default function EditorPage() {
   function handleRestoreVersion(idx: number) {
     const revisionText = doc.revisiones[idx];
     const oldVer = revisionText.split(" - ")[0];
-    updateDoc({ content: `[Versión Restaurada de ${oldVer}]\n${doc.content}`, version: oldVer });
+    updateDoc({
+      content: `<p><em>[Versión Restaurada de ${oldVer}]</em></p>${doc.content}`,
+      version: oldVer,
+    });
     toast.success(`Versión ${oldVer} restaurada con éxito en el borrador.`);
     audit(`Restauró documento ${doc.code} a la versión ${oldVer}`);
   }
@@ -264,16 +256,9 @@ export default function EditorPage() {
 
       <RegulationBanner visible={regulationBannerVisible} onApply={handleApplyRegulation} />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_300px]">
-        <GuidePanel doc={doc} />
-
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4.5">
-          <MetadataForm
-            doc={doc}
-            onFieldChange={updateDoc}
-            codeDraft={codeDraft}
-            onCodeDraftChange={setCodeDraft}
-          />
+          <MetadataForm doc={doc} />
           <ContentEditor
             doc={doc}
             activeUser={activeUser}
@@ -289,16 +274,20 @@ export default function EditorPage() {
           />
         </div>
 
-        <AiToolbox
-          onInsertText={(text) => {
-            appendContent(text);
-            toast.success("Sugerencia de la IA insertada al borrador.");
-          }}
-          onOpenSummary={() => setSummaryModalOpen(true)}
-          onOpenScanner={() => setScannerModalOpen(true)}
-          onSimulateRegulation={handleSimulateRegulation}
-          onAudit={audit}
-        />
+        <div className="flex flex-col gap-4.5">
+          <GuidePanel doc={doc} />
+
+          <AiToolbox
+            onInsertText={(text) => {
+              appendContent(text);
+              toast.success("Sugerencia de la IA insertada al borrador.");
+            }}
+            onOpenSummary={() => setSummaryModalOpen(true)}
+            onOpenScanner={() => setScannerModalOpen(true)}
+            onSimulateRegulation={handleSimulateRegulation}
+            onAudit={audit}
+          />
+        </div>
       </div>
 
       <VersionHistoryDialog

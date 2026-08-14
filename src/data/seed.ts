@@ -38,6 +38,7 @@ export interface SolinalDocument {
   vencido: boolean;
   /** true if the document is flagged as critical (may require double approval) */
   critico: boolean;
+  /** Rich HTML, edited via the contentEditable surface in ContentEditor.tsx (execCommand-style toolbar, mirroring legacy `#ebody`). */
   content: string;
   signatures: string[];
   revisiones: string[];
@@ -50,6 +51,7 @@ export interface DocumentTemplate {
   type: DocumentType;
   desc: string;
   preview: string;
+  /** Rich HTML, seeded into a new document's `content` on creation. */
   content: string;
   mandatory: string[];
 }
@@ -119,8 +121,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Ana Torres",
     vencido: false,
     critico: false,
-    content:
-      "1. Alcance: Definir los criterios de calidad para la liberación de producto terminado en la planta de papas fritas.\n2. Responsabilidades: El jefe de calidad es responsable de realizar los muestreos.\n3. Desarrollo: Inspección organoléptica, medición de humedad (máx 2%) y control de sellado de bolsas.\n4. Control de registros: Formato REG-CAL-015 guardado en servidor por 3 años.\n5. Firmas: Elaborado por Ana Torres.",
+    content: "<p><strong>1. Alcance:</strong> Definir los criterios de calidad para la liberación de producto terminado en la planta de papas fritas.</p><p><strong>2. Responsabilidades:</strong> El jefe de calidad es responsable de realizar los muestreos.</p><p><strong>3. Desarrollo:</strong> Inspección organoléptica, medición de humedad (máx 2%) y control de sellado de bolsas.</p><p><strong>4. Control de registros:</strong> Formato REG-CAL-015 guardado en servidor por 3 años.</p><p><strong>5. Firmas:</strong> Elaborado por Ana Torres.</p>",
     signatures: [],
     revisiones: [
       "v1.1: Ajustes en límites de humedad",
@@ -137,8 +138,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Erick Murillo",
     vencido: false,
     critico: true,
-    content:
-      "1. Objetivo: Establecer el compromiso de Solinal S.A. con la inocuidad y cumplimiento normativo.\n2. Alcance: Aplicable a todo el personal de planta y administración.\n3. Declaración de Política: Elaborar alimentos seguros siguiendo los estándares HACCP e ISO 22000.\n4. Revisión: Anual por la gerencia.",
+    content: "<p><strong>1. Objetivo:</strong> Establecer el compromiso de Solinal S.A. con la inocuidad y cumplimiento normativo.</p><p><strong>2. Alcance:</strong> Aplicable a todo el personal de planta y administración.</p><p><strong>3. Declaración de Política:</strong> Elaborar alimentos seguros siguiendo los estándares HACCP e ISO 22000.</p><p><strong>4. Revisión:</strong> Anual por la gerencia.</p>",
     signatures: ["Erick Murillo"],
     revisiones: ["v1.0: Emisión inicial aprobada en 2024"],
   },
@@ -152,8 +152,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Erick Murillo",
     vencido: false,
     critico: true,
-    content:
-      "1. Alcance: Sistema de Gestión de Calidad para la producción de papas fritas.\n2. Exclusiones: Ninguna.\n3. Procesos Clave: Recepción de papa, pelado, corte, fritura, empacado y despacho.\n4. Política de Calidad integrada.",
+    content: "<p><strong>1. Alcance:</strong> Sistema de Gestión de Calidad para la producción de papas fritas.</p><p><strong>2. Exclusiones:</strong> Ninguna.</p><p><strong>3. Procesos Clave:</strong> Recepción de papa, pelado, corte, fritura, empacado y despacho.</p><p>4. Política de Calidad integrada.</p>",
     signatures: ["Erick Murillo", "Carlos Ruiz"],
     revisiones: [
       "v3.0: Adecuación a nueva estructura",
@@ -170,8 +169,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Ana Torres",
     vencido: false,
     critico: false,
-    content:
-      "1. Preparación: Apagar línea de fritura y purgar remanente de aceite.\n2. Lavado cáustico: Circular solución de NaOH al 1.5% a 75°C durante 20 minutes.\n3. Enjuague: Con agua potable hasta pH neutro.\n4. Registro: Anotar en bitácora de limpieza.",
+    content: "<p><strong>1. Preparación:</strong> Apagar línea de fritura y purgar remanente de aceite.</p><p><strong>2. Lavado cáustico:</strong> Circular solución de NaOH al 1.5% a 75°C durante 20 minutes.</p><p><strong>3. Enjuague:</strong> Con agua potable hasta pH neutro.</p><p><strong>4. Registro:</strong> Anotar en bitácora de limpieza.</p>",
     signatures: [],
     revisiones: [],
   },
@@ -185,13 +183,12 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Nicolas Fiallo",
     vencido: true,
     critico: false,
-    content:
-      "1. Verificación de limpieza de línea tras procesar papas con sabor a queso.\n2. Inspección visual de residuos de polvo sazonador.\n3. Prueba rápida de flujo lateral para alérgenos de leche.\n4. Liberación de línea por supervisor.",
+    content: "<p>1. Verificación de limpieza de línea tras procesar papas con sabor a queso.</p><p>2. Inspección visual de residuos de polvo sazonador.</p><p>3. Prueba rápida de flujo lateral para alérgenos de leche.</p><p>4. Liberación de línea por supervisor.</p>",
     signatures: ["Nicolas Fiallo"],
     revisiones: ["v1.4: Actualización de kit de prueba rápida"],
   },
   {
-    code: "REG-AMB-002",
+    code: "INS-AMB-002",
     title: "Registro de Residuos Sólidos",
     type: "Instructivo",
     norma: "ISO 14001:2015",
@@ -200,8 +197,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Nicolas Fiallo",
     vencido: true,
     critico: false,
-    content:
-      "1. Objetivo: Registrar la cantidad de residuos orgánicos e inorgánicos generados diariamente.\n2. Disposición: Desechos de papa a compostaje; empaques plásticos a reciclaje.",
+    content: "<p><strong>1. Objetivo:</strong> Registrar la cantidad de residuos orgánicos e inorgánicos generados diariamente.</p><p><strong>2. Disposición:</strong> Desechos de papa a compostaje; empaques plásticos a reciclaje.</p>",
     signatures: ["Nicolas Fiallo"],
     revisiones: [],
   },
@@ -215,8 +211,7 @@ export const seedDocuments: SolinalDocument[] = [
     creador: "Carlos Ruiz",
     vencido: true,
     critico: true,
-    content:
-      "1. Alcance: Trazabilidad de materia prima (papa, aceite, sazonador) hasta cliente final.\n2. Simulacro de retiro: Dos veces al año, meta de efectividad 98% en 4 horas.",
+    content: "<p><strong>1. Alcance:</strong> Trazabilidad de materia prima (papa, aceite, sazonador) hasta cliente final.</p><p><strong>2. Simulacro de retiro:</strong> Dos veces al año, meta de efectividad 98% en 4 horas.</p>",
     signatures: ["Carlos Ruiz"],
     revisiones: ["v2.0: Ajuste de tiempos de retiro"],
   },
@@ -230,8 +225,7 @@ export const seedTemplates: DocumentTemplate[] = [
     type: "Procedimiento",
     desc: "Estructura con alcance, responsabilidades, control de cambios y registros.",
     preview: "Incluye alcance, responsables, registros y control de cambios.",
-    content:
-      "1. Alcance\n2. Responsabilidades\n3. Recursos y controles\n4. Registro de calidad\n5. Control de cambios",
+    content: "<ol><li>Alcance</li><li>Responsabilidades</li><li>Recursos y controles</li><li>Registro de calidad</li><li>Control de cambios</li></ol>",
     mandatory: ["Alcance", "Responsabilidades"],
   },
   {
@@ -241,8 +235,7 @@ export const seedTemplates: DocumentTemplate[] = [
     type: "Política",
     desc: "Documento maestro con firma obligatoria y revisión anual.",
     preview: "Incluye firma obligatoria, revisión anual y autoridad responsable.",
-    content:
-      "1. Objetivo\n2. Alcance\n3. Declaración de política\n4. Responsabilidades\n5. Revisión y firma",
+    content: "<ol><li>Objetivo</li><li>Alcance</li><li>Declaración de política</li><li>Responsabilidades</li><li>Revisión y firma</li></ol>",
     mandatory: ["Declaración de política", "Firma"],
   },
   {
@@ -252,8 +245,7 @@ export const seedTemplates: DocumentTemplate[] = [
     type: "Checklist",
     desc: "Formato verificable con alérgenos y responsables.",
     preview: "Incluye puntos de control, evidencia y responsables de verificación.",
-    content:
-      "1. Inspección de calidad\n2. Verificación de temperatura\n3. Confirmación de proveedores\n4. Registro de no conformidades",
+    content: "<ol><li>Inspección de calidad</li><li>Verificación de temperatura</li><li>Confirmación de proveedores</li><li>Registro de no conformidades</li></ol>",
     mandatory: ["Puntos de control"],
   },
   {
@@ -263,8 +255,7 @@ export const seedTemplates: DocumentTemplate[] = [
     type: "Instructivo",
     desc: "Guía paso a paso para control de higiene y actividades operativas.",
     preview: "Incluye pasos, herramientas necesarias y evidencia de control.",
-    content:
-      "1. Preparación\n2. Enjuague inicial\n3. Aplicación de detergente\n4. Enjuague final\n5. Verificación de limpieza",
+    content: "<ol><li>Preparación</li><li>Enjuague inicial</li><li>Aplicación de detergente</li><li>Enjuague final</li><li>Verificación de limpieza</li></ol>",
     mandatory: ["Pasos de limpieza"],
   },
 ];
