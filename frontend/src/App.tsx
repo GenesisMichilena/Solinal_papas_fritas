@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { AppStateProvider } from "@/context/AppStateContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,7 +21,7 @@ import Configuracion from "@/routes/Configuracion";
 export default function App() {
   return (
     <AppStateProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Dashboard />} />
@@ -34,7 +34,7 @@ export default function App() {
             <Route path="configuracion" element={<Configuracion />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
       <Toaster />
     </AppStateProvider>
   );
