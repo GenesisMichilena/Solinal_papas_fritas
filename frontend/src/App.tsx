@@ -1,8 +1,10 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { AppStateProvider } from "@/context/AppStateContext";
 import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/components/layout/RequireAuth";
 import { Toaster } from "@/components/ui/sonner";
 
+import Login from "@/routes/Login";
 import Dashboard from "@/routes/Dashboard";
 import Documentos from "@/routes/Documentos";
 import Editor from "@/routes/Editor";
@@ -23,15 +25,18 @@ export default function App() {
     <AppStateProvider>
       <HashRouter>
         <Routes>
-          <Route element={<AppShell />}>
-            <Route index element={<Dashboard />} />
-            <Route path="documentos" element={<Documentos />} />
-            <Route path="editor" element={<Editor />} />
-            <Route path="cumplimiento" element={<Cumplimiento />} />
-            <Route path="plantillas" element={<Plantillas />} />
-            <Route path="auditoria" element={<Auditoria />} />
-            <Route path="usuarios" element={<Usuarios />} />
-            <Route path="configuracion" element={<Configuracion />} />
+          <Route path="login" element={<Login />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<AppShell />}>
+              <Route index element={<Dashboard />} />
+              <Route path="documentos" element={<Documentos />} />
+              <Route path="editor" element={<Editor />} />
+              <Route path="cumplimiento" element={<Cumplimiento />} />
+              <Route path="plantillas" element={<Plantillas />} />
+              <Route path="auditoria" element={<Auditoria />} />
+              <Route path="usuarios" element={<Usuarios />} />
+              <Route path="configuracion" element={<Configuracion />} />
+            </Route>
           </Route>
         </Routes>
       </HashRouter>

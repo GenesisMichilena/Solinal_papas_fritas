@@ -28,7 +28,7 @@
  *                    `--tag-checklist` / `--tag-checklist-bg` token pair in
  *                    src/styles.css, for consistency with the other 4.
  */
-import type { DocumentStatus, DocumentType } from "@/data/seed";
+import type { DocumentStatus, DocumentType, SolinalDocument } from "@/data/seed";
 
 export const docTypeBadgeClass: Record<DocumentType, string> = {
   Procedimiento: "border-tag-technical/40 bg-tag-technical-bg text-tag-technical",
@@ -68,3 +68,60 @@ export const documentTypeOptions: DocumentType[] = [
   "Manual",
   "Checklist",
 ];
+
+/**
+ * Document codes are not arbitrary names — each is
+ * `TIPO-AREA-NNN` (e.g. "PRO-CAL-009" = Procedimiento, área Calidad, #009),
+ * per SolinalGestiona_MVP.html's legacy DOCS table. TIPO is derived from
+ * the document type below; AREA is chosen at creation time from
+ * `documentAreas`; NNN is the next sequential number for that exact
+ * TIPO-AREA pair (see nextDocumentCode).
+ */
+export const documentTypeAbbr: Record<DocumentType, string> = {
+  Procedimiento: "PRO",
+  Política: "POL",
+  Manual: "MAN",
+  Instructivo: "INS",
+  Checklist: "CHK",
+};
+
+export interface DocumentArea {
+  code: string;
+  label: string;
+}
+
+/** Departments/areas in use across the seed documents (Calidad, Gerencia,
+ * Producción, Ambiental, Seguridad, Higiene y Alérgenos). */
+export const documentAreas: DocumentArea[] = [
+  { code: "CAL", label: "Calidad" },
+  { code: "GER", label: "Gerencia" },
+  { code: "PRO", label: "Producción" },
+  { code: "AMB", label: "Ambiental" },
+  { code: "SEG", label: "Seguridad" },
+  { code: "HAC", label: "Higiene y Alérgenos" },
+];
+
+/** Middle segment of a document code -> its area, for display purposes
+ * (the code itself stays the single source of truth, nothing duplicates it
+ * on the document record). */
+export function areaFromCode(code: string): DocumentArea | undefined {
+  const areaCode = code.split("-")[1];
+  return documentAreas.find((a) => a.code === areaCode);
+}
+
+/** Next sequential code for a TIPO-AREA pair, e.g. nextDocumentCode("Procedimiento", "CAL", docs) -> "PRO-CAL-010". */
+export function nextDocumentCode(
+  type: DocumentType,
+  areaCode: string,
+  existingDocs: SolinalDocument[],
+): string {
+  const prefix = `${documentTypeAbbr[type]}-${areaCode}-`;
+  let max = 0;
+  for (const doc of existingDocs) {
+    if (doc.code.startsWith(prefix)) {
+      const n = parseInt(doc.code.slice(prefix.length), 10);
+      if (!Number.isNaN(n) && n > max) max = n;
+    }
+  }
+  return `${prefix}${String(max + 1).padStart(3, "0")}`;
+}

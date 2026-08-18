@@ -27,9 +27,9 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface SessionState {
+  isAuthenticated: boolean;
   activeRole: RoleName;
   activeUser: string;
-  roleIndex: number;
   isLocked: boolean;
   failedAttempts: number;
   /** Code of the document currently open in the editor. */
@@ -73,8 +73,8 @@ export const initialAppState: AppState = {
 
 export type AppAction =
   // --- session / auth -------------------------------------------------
-  | { type: "SET_CURRENT_ROLE"; payload: { user: string; role: RoleName } }
-  | { type: "CYCLE_ROLE" }
+  | { type: "LOGIN"; payload: { user: string; role: RoleName } }
+  | { type: "LOGOUT" }
   | { type: "LOCK_SYSTEM" }
   | { type: "UNLOCK_SYSTEM" }
   | { type: "REGISTER_FAILED_ATTEMPT" }
@@ -138,28 +138,16 @@ function makeAuditLog(
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case "SET_CURRENT_ROLE": {
+    case "LOGIN": {
       const { user, role } = action.payload;
       return {
         ...state,
-        session: { ...state.session, activeUser: user, activeRole: role },
+        session: { ...state.session, isAuthenticated: true, activeUser: user, activeRole: role },
       };
     }
 
-    case "CYCLE_ROLE": {
-      const nextIndex = (state.session.roleIndex + 1) % state.users.length;
-      const nextUser = state.users[nextIndex];
-      if (!nextUser) return state;
-      return {
-        ...state,
-        session: {
-          ...state.session,
-          roleIndex: nextIndex,
-          activeUser: nextUser.name,
-          activeRole: nextUser.role,
-        },
-      };
-    }
+    case "LOGOUT":
+      return { ...state, session: { ...initialSession } };
 
     case "LOCK_SYSTEM":
       return { ...state, session: { ...state.session, isLocked: true } };

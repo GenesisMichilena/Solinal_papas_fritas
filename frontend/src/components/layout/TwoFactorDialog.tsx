@@ -18,20 +18,23 @@ import {
 import { useAppState } from "@/context/AppStateContext";
 
 /**
- * 2FA PIN challenge shown before a role switch when
+ * 2FA PIN challenge shown before completing login when
  * `config.twoFactorEnabled` is on. Port of the legacy `twoFactorModal` +
  * `submit2FA`/`cancel2FA` (reference/legacy_vanilla/js/config.js, G10
  * Scenarios 2 & 4): valid demo tokens are "123456" or "654321", 3 failed
- * attempts locks the system (see LockScreen.tsx).
+ * attempts locks the system (see LockScreen.tsx). Originally gated the
+ * old topbar role-switch; now gates the login flow instead, since role
+ * switching from inside the app was removed in favor of per-role logins.
  */
 interface TwoFactorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onVerified: () => void;
 }
 
 const VALID_PINS = ["123456", "654321"];
 
-export function TwoFactorDialog({ open, onOpenChange }: TwoFactorDialogProps) {
+export function TwoFactorDialog({ open, onOpenChange, onVerified }: TwoFactorDialogProps) {
   const { state, dispatch } = useAppState();
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -44,13 +47,12 @@ export function TwoFactorDialog({ open, onOpenChange }: TwoFactorDialogProps) {
   function handleCancel() {
     reset();
     onOpenChange(false);
-    toast.warning("Cambio de perfil cancelado.");
+    toast.warning("Inicio de sesión cancelado.");
   }
 
   function handleSubmit() {
     if (VALID_PINS.includes(pin.trim())) {
       dispatch({ type: "RESET_FAILED_ATTEMPTS" });
-      dispatch({ type: "CYCLE_ROLE" });
       dispatch({
         type: "ADD_AUDIT_LOG",
         payload: { action: "Token de seguridad 2FA verificado correctamente." },
@@ -58,6 +60,7 @@ export function TwoFactorDialog({ open, onOpenChange }: TwoFactorDialogProps) {
       toast.success("Token de seguridad 2FA verificado correctamente.");
       reset();
       onOpenChange(false);
+      onVerified();
       return;
     }
 
@@ -100,7 +103,7 @@ export function TwoFactorDialog({ open, onOpenChange }: TwoFactorDialogProps) {
             Verificación en dos pasos
           </DialogTitle>
           <DialogDescription>
-            Ingresa el token de seguridad de 6 dígitos para confirmar el cambio de perfil.
+            Ingresa el token de seguridad de 6 dígitos para confirmar el inicio de sesión.
           </DialogDescription>
         </DialogHeader>
 

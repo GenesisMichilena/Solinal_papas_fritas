@@ -58,6 +58,11 @@ export function NewUserDialog({
   }
 
   function handleSave() {
+    if (state.session.activeRole !== "Administrador") {
+      toast.error("Solo un Administrador puede registrar nuevos usuarios.");
+      onOpenChange(false);
+      return;
+    }
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     if (!trimmedName || !trimmedEmail) {

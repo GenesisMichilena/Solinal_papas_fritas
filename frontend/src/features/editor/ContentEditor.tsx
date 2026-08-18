@@ -1,9 +1,29 @@
-import { Lock, LockOpen, PenSquare, Save } from "lucide-react";
+import { useEffect, useRef } from "react";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  Bold,
+  CircleCheck,
+  Heading1,
+  Heading2,
+  Heading3,
+  Italic,
+  List,
+  ListOrdered,
+  Lock,
+  LockOpen,
+  PenSquare,
+  Redo2,
+  Save,
+  Table as TableIcon,
+  Underline,
+  Undo2,
+} from "lucide-react";
 
 import type { DocumentComment, RoleName, SolinalDocument } from "@/data/seed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { CommentsThread } from "./CommentsThread";
 import { LockedSection } from "./LockedSection";
 import { SignaturesPanel } from "./SignaturesPanel";
@@ -22,8 +42,44 @@ interface ContentEditorProps {
   onSign: () => void;
 }
 
-/** Port of legacy js/editor.js "Editor de Contenido" card — WYSIWYG textarea,
- * lock toggle, locked section, comments thread and signatures panel. */
+const TABLE_HTML =
+  "<table><thead><tr><th>Columna 1</th><th>Columna 2</th></tr></thead>" +
+  "<tbody><tr><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><p><br></p>";
+
+function exec(cmd: string, value?: string) {
+  document.execCommand(cmd, false, value);
+}
+
+function ToolbarButton({
+  icon: Icon,
+  title,
+  onClick,
+}: {
+  icon: typeof Bold;
+  title: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      // Prevent the button from stealing focus so the editor's text
+      // selection survives the click — required for execCommand to act
+      // on the right range.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      <Icon className="size-[15px]" />
+    </button>
+  );
+}
+
+/** Port of legacy js/editor.js "Editor de Contenido" card — a real rich-text
+ * contentEditable surface with a formatting toolbar (bold/italic/underline,
+ * headings, lists, alignment, table insert, undo/redo — mirroring legacy
+ * `.etb` / `ed()`), plus the lock toggle, locked section, comments thread
+ * and signatures panel. */
 export function ContentEditor({
   doc,
   activeUser,
@@ -38,6 +94,27 @@ export function ContentEditor({
   onSign,
 }: ContentEditorProps) {
   const isOwner = activeUser === doc.creador || activeRole === "Administrador";
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Uncontrolled contentEditable: only re-seed the DOM when switching to a
+  // different document, never on every keystroke (that would fight the
+  // browser's own cursor/selection handling).
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.innerHTML = doc.content;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc.code]);
+
+  function handleInput() {
+    if (bodyRef.current) onContentChange(bodyRef.current.innerHTML);
+  }
+
+  function runCommand(cmd: string, value?: string) {
+    bodyRef.current?.focus();
+    exec(cmd, value);
+    handleInput();
+  }
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4.5">
@@ -63,12 +140,53 @@ export function ContentEditor({
 
       <LockedSection doc={doc} activeUser={activeUser} activeRole={activeRole} />
 
-      <Textarea
-        value={doc.content}
-        onChange={(e) => onContentChange(e.target.value)}
-        rows={16}
-        className="min-h-[360px] rounded-2xl p-4.5 leading-relaxed"
-      />
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/50 px-2 py-1.5">
+          <ToolbarButton icon={Bold} title="Negrita" onClick={() => runCommand("bold")} />
+          <ToolbarButton icon={Italic} title="Cursiva" onClick={() => runCommand("italic")} />
+          <ToolbarButton icon={Underline} title="Subrayado" onClick={() => runCommand("underline")} />
+          <div className="mx-1 h-4 w-px bg-border" />
+          <ToolbarButton icon={Heading1} title="Título 1" onClick={() => runCommand("formatBlock", "H1")} />
+          <ToolbarButton icon={Heading2} title="Título 2" onClick={() => runCommand("formatBlock", "H2")} />
+          <ToolbarButton icon={Heading3} title="Título 3" onClick={() => runCommand("formatBlock", "H3")} />
+          <div className="mx-1 h-4 w-px bg-border" />
+          <ToolbarButton icon={List} title="Lista" onClick={() => runCommand("insertUnorderedList")} />
+          <ToolbarButton icon={ListOrdered} title="Lista numerada" onClick={() => runCommand("insertOrderedList")} />
+          <div className="mx-1 h-4 w-px bg-border" />
+          <ToolbarButton icon={AlignLeft} title="Izquierda" onClick={() => runCommand("justifyLeft")} />
+          <ToolbarButton icon={AlignCenter} title="Centro" onClick={() => runCommand("justifyCenter")} />
+          <ToolbarButton icon={AlignJustify} title="Justificar" onClick={() => runCommand("justifyFull")} />
+          <div className="mx-1 h-4 w-px bg-border" />
+          <ToolbarButton icon={TableIcon} title="Insertar tabla" onClick={() => runCommand("insertHTML", TABLE_HTML)} />
+          <div className="mx-1 h-4 w-px bg-border" />
+          <ToolbarButton icon={Undo2} title="Deshacer" onClick={() => runCommand("undo")} />
+          <ToolbarButton icon={Redo2} title="Rehacer" onClick={() => runCommand("redo")} />
+
+          <span className="ml-auto flex items-center gap-1 text-[11px] font-medium text-status-valid">
+            <CircleCheck className="size-3.5" /> Guardado automáticamente
+          </span>
+        </div>
+
+        <div
+          ref={bodyRef}
+          contentEditable
+          suppressContentEditableWarning
+          spellCheck={false}
+          onInput={handleInput}
+          className="min-h-[360px] bg-background p-4.5 leading-relaxed focus:outline-none
+            [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:first:mt-0
+            [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-bold
+            [&_h3]:mb-1.5 [&_h3]:mt-3 [&_h3]:text-base [&_h3]:font-bold
+            [&_p]:mb-2.5 [&_p]:last:mb-0
+            [&_ul]:mb-2.5 [&_ul]:list-disc [&_ul]:pl-5
+            [&_ol]:mb-2.5 [&_ol]:list-decimal [&_ol]:pl-5
+            [&_li]:mb-1
+            [&_strong]:font-bold
+            [&_table]:my-2.5 [&_table]:w-full [&_table]:border-collapse
+            [&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:p-1.5 [&_th]:text-left [&_th]:text-xs
+            [&_td]:border [&_td]:border-border [&_td]:p-1.5 [&_td]:text-xs"
+        />
+      </div>
 
       <CommentsThread comments={comments} canComment={canComment} onAddComment={onAddComment} />
 

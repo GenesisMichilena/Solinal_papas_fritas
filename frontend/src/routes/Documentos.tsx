@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { FileDown, FilePlus, LayoutGrid, ListFilter, Plus, SearchX } from "lucide-react";
+import { CircleCheck, FileDown, FilePlus, FileText, LayoutGrid, ListFilter, Plus, SearchX } from "lucide-react";
 
 import { useAppState } from "@/context/AppStateContext";
 import type { DocumentStatus, DocumentType } from "@/data/seed";
@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ApprovalFlowDialog } from "@/features/documents/ApprovalFlowDialog";
 import { CreateDocumentDialog } from "@/features/documents/CreateDocumentDialog";
 import { docTypeBadgeClass, documentTypeOptions, normaOptions, statusBadgeClass, statusLabel } from "@/features/documents/docStyles";
 
@@ -42,6 +43,10 @@ export default function Documentos() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createMode, setCreateMode] = useState<"blank" | "template">("blank");
+
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [approvalCode, setApprovalCode] = useState<string | null>(null);
+  const approvalDoc = state.documents.find((d) => d.code === approvalCode) ?? null;
 
   const isLector = state.session.activeRole === "Lector";
 
@@ -79,6 +84,11 @@ export default function Documentos() {
   function openCreateDoc(mode: "blank" | "template") {
     setCreateMode(mode);
     setCreateOpen(true);
+  }
+
+  function openApprovalFlow(code: string) {
+    setApprovalCode(code);
+    setApprovalOpen(true);
   }
 
   return (
@@ -174,18 +184,6 @@ export default function Documentos() {
           </div>
         </div>
 
-        {!isLector && (
-          <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
-            <Button onClick={() => openCreateDoc("blank")}>
-              <FilePlus className="size-4" />
-              Crear documento desde cero
-            </Button>
-            <Button variant="outline" onClick={() => openCreateDoc("template")}>
-              <LayoutGrid className="size-4" />
-              Crear con plantilla
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-2">
@@ -198,6 +196,7 @@ export default function Documentos() {
               <TableHead>Norma</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Versión</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -230,6 +229,34 @@ export default function Documentos() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{d.version}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Exportar a PDF"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toast.success(`Exportando ${d.code}.pdf...`);
+                      }}
+                      className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <FileText className="size-[15px]" />
+                    </button>
+                    {d.estado === "En aprobación" && (
+                      <button
+                        type="button"
+                        title="Aprobar"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openApprovalFlow(d.code);
+                        }}
+                        className="flex size-7 items-center justify-center rounded-md text-status-valid transition-colors hover:bg-status-valid/10"
+                      >
+                        <CircleCheck className="size-[15px]" />
+                      </button>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -250,6 +277,7 @@ export default function Documentos() {
       </div>
 
       <CreateDocumentDialog open={createOpen} onOpenChange={setCreateOpen} initialMode={createMode} />
+      <ApprovalFlowDialog open={approvalOpen} onOpenChange={setApprovalOpen} doc={approvalDoc} />
     </div>
   );
 }
