@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,11 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppState } from "@/context/AppStateContext";
-import type { DocumentTemplate, DocumentType } from "@/data/seed";
+import type { DocumentTemplate, DocumentType, TemplateLevel, TemplateSection } from "@/data/seed";
 import type { AITemplateProposal } from "./aiSimulator";
 
 const NORMAS = ["ISO 9001:2015", "ISO 14001:2015", "ISO 22000:2018"];
 const TYPES: DocumentType[] = ["Procedimiento", "Política", "Instructivo", "Manual", "Checklist"];
+const NIVELES: TemplateLevel[] = ["Política", "Manual", "Procedimiento", "Instructivo", "Registro"];
+const PERIODICIDADES = ["Anual", "Bienal", "Semestral", "No aplica"] as const;
 
 interface NewTemplateDialogProps {
   open: boolean;
@@ -36,9 +40,67 @@ const emptyForm = {
   name: "",
   norma: NORMAS[0],
   type: TYPES[0],
-  mandatory: "",
+  nivel: "Procedimiento" as TemplateLevel,
+  clausulaIso: "",
+  periodicidadRevision: "Anual" as (typeof PERIODICIDADES)[number],
+  secciones: [] as TemplateSection[],
   desc: "",
 };
+
+/** Editor dinámico de secciones — reemplaza el input de texto separado por
+ * comas por una lista donde cada sección tiene título + propósito propios,
+ * en vez de solo un nombre (ver DocumentTemplate.secciones en seed.ts). */
+function SeccionesEditor({
+  secciones,
+  onChange,
+}: {
+  secciones: TemplateSection[];
+  onChange: (s: TemplateSection[]) => void;
+}) {
+  function addSeccion() {
+    onChange([...secciones, { titulo: "", proposito: "", obligatoria: true }]);
+  }
+  function updateSeccion(i: number, changes: Partial<TemplateSection>) {
+    onChange(secciones.map((s, idx) => (idx === i ? { ...s, ...changes } : s)));
+  }
+  function removeSeccion(i: number) {
+    onChange(secciones.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div className="space-y-2">
+      {secciones.map((s, i) => (
+        <div key={i} className="flex items-start gap-2 rounded-lg border border-border p-2">
+          <div className="grid flex-1 gap-1.5">
+            <Input
+              placeholder="Título de sección"
+              value={s.titulo}
+              onChange={(e) => updateSeccion(i, { titulo: e.target.value })}
+            />
+            <Input
+              placeholder="Propósito de la sección"
+              value={s.proposito}
+              onChange={(e) => updateSeccion(i, { proposito: e.target.value })}
+            />
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Checkbox
+                checked={s.obligatoria}
+                onCheckedChange={(v) => updateSeccion(i, { obligatoria: v === true })}
+              />
+              Obligatoria
+            </label>
+          </div>
+          <Button variant="outline" size="icon" onClick={() => removeSeccion(i)} title="Quitar sección">
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+      <Button variant="outline" size="sm" onClick={addSeccion}>
+        + Agregar sección
+      </Button>
+    </div>
+  );
+}
 
 /** Ported from js/templates.js saveNewTemplate() (G06 Scenario 4: mandatory
  * section required to comply with ISO guidelines). */
@@ -54,7 +116,14 @@ export function NewTemplateDialog({ open, onOpenChange, prefill }: NewTemplateDi
               name: prefill.name,
               norma: prefill.norma,
               type: prefill.type,
-              mandatory: prefill.mandatory.join(", "),
+              nivel: prefill.nivel,
+              clausulaIso: prefill.clausulaIso,
+              periodicidadRevision: prefill.periodicidadRevision,
+              secciones: prefill.mandatory.map((titulo) => ({
+                titulo,
+                proposito: "",
+                obligatoria: true,
+              })),
               desc: prefill.desc,
             }
           : emptyForm,
@@ -64,23 +133,22 @@ export function NewTemplateDialog({ open, onOpenChange, prefill }: NewTemplateDi
 
   function handleSave() {
     const name = form.name.trim();
-    const mandatoryInput = form.mandatory.trim();
+    const secciones = form.secciones
+      .map((s) => ({ ...s, titulo: s.titulo.trim(), proposito: s.proposito.trim() }))
+      .filter((s) => s.titulo);
 
     if (!name) {
       toast.error("El nombre de la plantilla es obligatorio.");
       return;
     }
-    if (!mandatoryInput) {
+    if (secciones.length === 0) {
       toast.error(
         "Debe especificar al menos una sección obligatoria para cumplir con las directrices ISO.",
       );
       return;
     }
 
-    const mandatoryArray = mandatoryInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const mandatoryArray = secciones.filter((s) => s.obligatoria).map((s) => s.titulo);
 
     const newTemplate: DocumentTemplate = {
       key: `${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
@@ -88,9 +156,20 @@ export function NewTemplateDialog({ open, onOpenChange, prefill }: NewTemplateDi
       norma: form.norma,
       type: form.type,
       desc: form.desc || `Estructura personalizada para ${form.type} bajo la norma ${form.norma}.`,
-      preview: `Secciones obligatorias: ${mandatoryArray.join(", ")}`,
-      content: mandatoryArray.map((m, i) => `${i + 1}. ${m}`).join("\n"),
+      preview: `Secciones: ${secciones.map((s) => s.titulo).join(", ")}`,
+      content: secciones.map((s, i) => `${i + 1}. ${s.titulo}`).join("<br/>"),
       mandatory: mandatoryArray,
+      nivel: form.nivel,
+      clausulaIso: form.clausulaIso.trim(),
+      periodicidadRevision: form.periodicidadRevision,
+      tiempoRetencionAnios: 3,
+      rolesRequeridos: {
+        elaborador: "Elaborador",
+        revisor: "Revisor",
+        aprobador: "Aprobador",
+        dobleAprobacion: false,
+      },
+      secciones,
     };
 
     dispatch({ type: "TEMPLATE_ADD", payload: newTemplate });
@@ -157,15 +236,63 @@ export function NewTemplateDialog({ open, onOpenChange, prefill }: NewTemplateDi
             </div>
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>Nivel documental</Label>
+              <Select
+                value={form.nivel}
+                onValueChange={(v) => setForm((f) => ({ ...f, nivel: v as TemplateLevel }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NIVELES.map((n) => (
+                    <SelectItem key={n} value={n}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="new-temp-clausula">Cláusula ISO</Label>
+              <Input
+                id="new-temp-clausula"
+                placeholder="Ej. 7.5.3"
+                value={form.clausulaIso}
+                onChange={(e) => setForm((f) => ({ ...f, clausulaIso: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Periodicidad</Label>
+              <Select
+                value={form.periodicidadRevision}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, periodicidadRevision: v as (typeof PERIODICIDADES)[number] }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIODICIDADES.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="new-temp-mandatory">
-              Estructura / secciones obligatorias (separa por comas)
-            </Label>
-            <Input
-              id="new-temp-mandatory"
-              placeholder="Alcance, Responsabilidades, Trazabilidad"
-              value={form.mandatory}
-              onChange={(e) => setForm((f) => ({ ...f, mandatory: e.target.value }))}
+            <Label>Estructura de secciones</Label>
+            <SeccionesEditor
+              secciones={form.secciones}
+              onChange={(secciones) => setForm((f) => ({ ...f, secciones }))}
             />
           </div>
 

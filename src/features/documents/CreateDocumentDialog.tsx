@@ -33,6 +33,10 @@ interface CreateDocumentDialogProps {
   onOpenChange: (open: boolean) => void;
   /** "blank" | "template" — mirrors legacy openCreateDoc(mode) initial focus. */
   initialMode: "blank" | "template";
+  /** Pre-selects a specific template on open — e.g. when arriving from the
+   * "Crear documento" button on a template's detail view in Plantillas.tsx,
+   * instead of leaving the user to pick again from the dropdown. */
+  initialTemplateKey?: string;
 }
 
 const emptyForm = {
@@ -49,16 +53,31 @@ export function CreateDocumentDialog({
   open,
   onOpenChange,
   initialMode,
+  initialTemplateKey,
 }: CreateDocumentDialogProps) {
   const { state, dispatch } = useAppState();
   const navigate = useNavigate();
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    const preset = initialTemplateKey
+      ? state.templates.find((t) => t.key === initialTemplateKey)
+      : undefined;
+    if (preset) {
+      setForm({
+        ...emptyForm,
+        templateKey: preset.key,
+        title: `Borrador — ${preset.name}`,
+        type: preset.type,
+        norma: preset.norma as (typeof normaOptions)[number],
+        description: preset.desc,
+      });
+    } else {
       setForm({ ...emptyForm, templateKey: initialMode === "template" ? "__pick__" : "" });
     }
-  }, [open, initialMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialMode, initialTemplateKey]);
 
   const selectedTemplate =
     form.templateKey && form.templateKey !== "__pick__"
@@ -102,10 +121,15 @@ export function CreateDocumentDialog({
       version: "v1.0",
       creador: state.session.activeUser,
       vencido: false,
-      critico: form.critical,
+      // Si viene de una plantilla, la exigencia de doble aprobación la
+      // define la plantilla, no el checkbox manual (que solo aplica a
+      // documentos en blanco, sin plantilla de origen).
+      critico: template ? template.rolesRequeridos.dobleAprobacion : form.critical,
       content: template ? template.content : "",
       signatures: [],
       revisiones: [],
+      nivel: template?.nivel,
+      rolesRequeridos: template?.rolesRequeridos,
     };
 
     dispatch({ type: "ADD_DOCUMENT", payload: newDoc });

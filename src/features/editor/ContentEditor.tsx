@@ -40,6 +40,9 @@ interface ContentEditorProps {
   onSaveVersion: () => void;
   onAddComment: (text: string) => void;
   onSign: () => void;
+  /** true when this is a signed Registro — content is frozen evidence and
+   * can no longer be edited (ver docStyles.esRegistroPorNivel). */
+  readOnly?: boolean;
 }
 
 const TABLE_HTML =
@@ -54,21 +57,24 @@ function ToolbarButton({
   icon: Icon,
   title,
   onClick,
+  disabled,
 }: {
   icon: typeof Bold;
   title: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       title={title}
+      disabled={disabled}
       // Prevent the button from stealing focus so the editor's text
       // selection survives the click — required for execCommand to act
       // on the right range.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
     >
       <Icon className="size-[15px]" />
     </button>
@@ -92,6 +98,7 @@ export function ContentEditor({
   onSaveVersion,
   onAddComment,
   onSign,
+  readOnly = false,
 }: ContentEditorProps) {
   const isOwner = activeUser === doc.creador || activeRole === "Administrador";
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -140,27 +147,34 @@ export function ContentEditor({
 
       <LockedSection doc={doc} activeUser={activeUser} activeRole={activeRole} />
 
+      {readOnly && (
+        <div className="mb-3 rounded-md border-l-4 border-secondary bg-muted p-3 text-xs text-muted-foreground">
+          Este documento es un <strong>Registro</strong> y ya cuenta con firma(s). Su contenido
+          queda protegido como evidencia y no puede modificarse.
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-border">
         <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/50 px-2 py-1.5">
-          <ToolbarButton icon={Bold} title="Negrita" onClick={() => runCommand("bold")} />
-          <ToolbarButton icon={Italic} title="Cursiva" onClick={() => runCommand("italic")} />
-          <ToolbarButton icon={Underline} title="Subrayado" onClick={() => runCommand("underline")} />
+          <ToolbarButton icon={Bold} title="Negrita" onClick={() => runCommand("bold")} disabled={readOnly} />
+          <ToolbarButton icon={Italic} title="Cursiva" onClick={() => runCommand("italic")} disabled={readOnly} />
+          <ToolbarButton icon={Underline} title="Subrayado" onClick={() => runCommand("underline")} disabled={readOnly} />
           <div className="mx-1 h-4 w-px bg-border" />
-          <ToolbarButton icon={Heading1} title="Título 1" onClick={() => runCommand("formatBlock", "H1")} />
-          <ToolbarButton icon={Heading2} title="Título 2" onClick={() => runCommand("formatBlock", "H2")} />
-          <ToolbarButton icon={Heading3} title="Título 3" onClick={() => runCommand("formatBlock", "H3")} />
+          <ToolbarButton icon={Heading1} title="Título 1" onClick={() => runCommand("formatBlock", "H1")} disabled={readOnly} />
+          <ToolbarButton icon={Heading2} title="Título 2" onClick={() => runCommand("formatBlock", "H2")} disabled={readOnly} />
+          <ToolbarButton icon={Heading3} title="Título 3" onClick={() => runCommand("formatBlock", "H3")} disabled={readOnly} />
           <div className="mx-1 h-4 w-px bg-border" />
-          <ToolbarButton icon={List} title="Lista" onClick={() => runCommand("insertUnorderedList")} />
-          <ToolbarButton icon={ListOrdered} title="Lista numerada" onClick={() => runCommand("insertOrderedList")} />
+          <ToolbarButton icon={List} title="Lista" onClick={() => runCommand("insertUnorderedList")} disabled={readOnly} />
+          <ToolbarButton icon={ListOrdered} title="Lista numerada" onClick={() => runCommand("insertOrderedList")} disabled={readOnly} />
           <div className="mx-1 h-4 w-px bg-border" />
-          <ToolbarButton icon={AlignLeft} title="Izquierda" onClick={() => runCommand("justifyLeft")} />
-          <ToolbarButton icon={AlignCenter} title="Centro" onClick={() => runCommand("justifyCenter")} />
-          <ToolbarButton icon={AlignJustify} title="Justificar" onClick={() => runCommand("justifyFull")} />
+          <ToolbarButton icon={AlignLeft} title="Izquierda" onClick={() => runCommand("justifyLeft")} disabled={readOnly} />
+          <ToolbarButton icon={AlignCenter} title="Centro" onClick={() => runCommand("justifyCenter")} disabled={readOnly} />
+          <ToolbarButton icon={AlignJustify} title="Justificar" onClick={() => runCommand("justifyFull")} disabled={readOnly} />
           <div className="mx-1 h-4 w-px bg-border" />
-          <ToolbarButton icon={TableIcon} title="Insertar tabla" onClick={() => runCommand("insertHTML", TABLE_HTML)} />
+          <ToolbarButton icon={TableIcon} title="Insertar tabla" onClick={() => runCommand("insertHTML", TABLE_HTML)} disabled={readOnly} />
           <div className="mx-1 h-4 w-px bg-border" />
-          <ToolbarButton icon={Undo2} title="Deshacer" onClick={() => runCommand("undo")} />
-          <ToolbarButton icon={Redo2} title="Rehacer" onClick={() => runCommand("redo")} />
+          <ToolbarButton icon={Undo2} title="Deshacer" onClick={() => runCommand("undo")} disabled={readOnly} />
+          <ToolbarButton icon={Redo2} title="Rehacer" onClick={() => runCommand("redo")} disabled={readOnly} />
 
           <span className="ml-auto flex items-center gap-1 text-[11px] font-medium text-status-valid">
             <CircleCheck className="size-3.5" /> Guardado automáticamente
@@ -169,7 +183,7 @@ export function ContentEditor({
 
         <div
           ref={bodyRef}
-          contentEditable
+          contentEditable={!readOnly}
           suppressContentEditableWarning
           spellCheck={false}
           onInput={handleInput}

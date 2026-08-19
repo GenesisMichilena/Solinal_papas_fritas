@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useReducer,
   type Dispatch,
   type ReactNode,
@@ -47,6 +48,18 @@ export interface AppState {
   session: SessionState;
 }
 
+const SESSION_STORAGE_KEY = "solinal-gestiona:session";
+
+function loadPersistedSession(): SessionState {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return { ...initialSession };
+    return { ...initialSession, ...(JSON.parse(raw) as Partial<SessionState>) };
+  } catch {
+    return { ...initialSession };
+  }
+}
+
 export const initialAppState: AppState = {
   documents: seedDocuments,
   templates: seedTemplates,
@@ -54,22 +67,9 @@ export const initialAppState: AppState = {
   comments: seedComments,
   users: seedUsers,
   config: seedConfig,
-  session: { ...initialSession },
+  session: loadPersistedSession(),
 };
 
-// ---------------------------------------------------------------------------
-// Actions
-//
-// This is the foundation set of actions implied by the legacy JS
-// (navigation.js executeRoleChange, state.js logAuditAction, documents.js
-// CRUD, users.js kanban drag/drop, config.js settings form).
-//
-// Phase 1 feature agents: add NEW action types only inside the
-// "FEATURE-AGENT EXTENSIONS" block below, each in its own clearly
-// commented sub-section with your feature name. Do not edit the actions
-// above that line — they are shared foundation actions other pages rely
-// on too.
-// ---------------------------------------------------------------------------
 
 export type AppAction =
   // --- session / auth -------------------------------------------------
@@ -102,21 +102,12 @@ export type AppAction =
   // --- audit trail -------------------------------------------------------
   | { type: "ADD_AUDIT_LOG"; payload: { action: string } }
 
-  // ---------------------------------------------------------------------
-  // FEATURE-AGENT EXTENSIONS
-  // Add your new action types below this line, in their own commented
-  // sub-section (e.g. "-- documents feature --"). Do NOT remove or edit
-  // other agents' sections; resolved/reconciled in Phase 2 (integration-qa).
-  // ---------------------------------------------------------------------
 
   // -- compliance/templates feature (src/routes/Plantillas.tsx) --
   | { type: "TEMPLATE_ADD"; payload: DocumentTemplate }
 
   | { type: "__NOOP" };
 
-// ---------------------------------------------------------------------------
-// Reducer
-// ---------------------------------------------------------------------------
 
 function makeAuditLog(
   state: AppState,
@@ -228,10 +219,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         auditLogs: [makeAuditLog(state, action.payload.action), ...state.auditLogs],
       };
 
-    // -----------------------------------------------------------------
-    // FEATURE-AGENT EXTENSIONS: add new `case` branches below this line,
-    // matching the action types you added above.
-    // -----------------------------------------------------------------
 
     // -- compliance/templates feature (src/routes/Plantillas.tsx) --
     case "TEMPLATE_ADD":
@@ -245,10 +232,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Context + hook
-// ---------------------------------------------------------------------------
-
 interface AppStateContextValue {
   state: AppState;
   dispatch: Dispatch<AppAction>;
@@ -260,6 +243,16 @@ const AppStateContext = createContext<AppStateContextValue | undefined>(
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialAppState);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state.session));
+    } catch {
+      // localStorage unavailable (private mode/quota) — session just won't
+      // survive a reload, not worth surfacing to the user.
+    }
+  }, [state.session]);
+
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
       {children}

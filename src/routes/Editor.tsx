@@ -8,6 +8,7 @@ import type { SolinalDocument } from "@/data/seed";
 import { Button } from "@/components/ui/button";
 import { AiToolbox } from "@/features/editor/AiToolbox";
 import { ContentEditor } from "@/features/editor/ContentEditor";
+import { esRegistroPorNivel } from "@/features/documents/docStyles";
 import { GuidePanel } from "@/features/editor/GuidePanel";
 import { MergeDialog } from "@/features/editor/MergeDialog";
 import { MetadataForm } from "@/features/editor/MetadataForm";
@@ -160,6 +161,25 @@ export default function EditorPage() {
       audit(`Intento fallido de firma en ${doc.code} por ${activeUser} (Rol: ${activeRole})`);
       return;
     }
+
+    // Guardia adicional: si el documento viene de una plantilla con roles
+    // esperados definidos, el firmante debe coincidir con el revisor o
+    // aprobador que la plantilla exige. Administrador siempre puede firmar
+    // (mismo criterio que el resto de la app — ver Usuarios.tsx/handleToggleLock).
+    const rolesEsperados = doc.rolesRequeridos;
+    if (
+      rolesEsperados &&
+      activeRole !== "Administrador" &&
+      activeRole !== rolesEsperados.aprobador &&
+      activeRole !== rolesEsperados.revisor
+    ) {
+      toast.error(`Este documento requiere firma de ${rolesEsperados.revisor} o ${rolesEsperados.aprobador}.`);
+      audit(
+        `Intento no autorizado de firma en ${doc.code} por ${activeUser} (Rol: ${activeRole}, se esperaba ${rolesEsperados.aprobador})`,
+      );
+      return;
+    }
+
     if (doc.signatures.includes(activeUser)) {
       toast.warning("Ya has firmado este documento.");
       return;
@@ -232,6 +252,10 @@ export default function EditorPage() {
   // so any role reaching this point is implicitly allowed to comment.
   const canComment = true;
 
+  // Un Registro firmado es evidencia congelada — su contenido ya no puede
+  // editarse (ver docStyles.esRegistroPorNivel).
+  const contenidoBloqueado = esRegistroPorNivel(doc.nivel) && doc.signatures.length > 0;
+
   return (
     <div className="flex flex-col gap-4.5">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -248,9 +272,6 @@ export default function EditorPage() {
           <Button variant="outline" size="sm" onClick={() => setVersionModalOpen(true)}>
             <History className="size-3.5" /> Historial de versiones
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setMergeModalOpen(true)}>
-            <GitMerge className="size-3.5" /> Fusión concurrente
-          </Button>
         </div>
       </div>
 
@@ -265,6 +286,7 @@ export default function EditorPage() {
             activeRole={activeRole}
             isSectionLocked={state.session.isSectionLocked}
             comments={state.comments.filter((c) => c.code === doc.code)}
+            readOnly={contenidoBloqueado}
             canComment={canComment}
             onContentChange={(content) => updateDoc({ content })}
             onToggleLock={handleToggleLock}

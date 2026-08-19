@@ -1,12 +1,20 @@
-import { FileText } from "lucide-react";
+import { FileText, BookOpen, ListChecks, ClipboardCheck, ScrollText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { DocumentTemplate } from "@/data/seed";
+import type { DocumentTemplate, TemplateLevel } from "@/data/seed";
 
 interface TemplateCardProps {
   template: DocumentTemplate;
   onSelect: (template: DocumentTemplate) => void;
 }
+
+const nivelIcon: Record<TemplateLevel, typeof FileText> = {
+  "Política": ScrollText,
+  "Manual": BookOpen,
+  "Procedimiento": FileText,
+  "Instructivo": ListChecks,
+  "Registro": ClipboardCheck,
+};
 
 /** Ported from js/templates.js renderTemplates() (.template-card). */
 export function TemplateCard({ template, onSelect }: TemplateCardProps) {
@@ -32,6 +40,13 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
           </Badge>
           <Badge variant="outline" className="font-normal">
             {template.type}
+          </Badge>
+          <Badge variant="secondary" className="gap-1 font-normal">
+            {(() => {
+              const Icon = nivelIcon[template.nivel];
+              return <Icon className="size-3" />;
+            })()}
+            {template.nivel}
           </Badge>
         </div>
       </CardContent>

@@ -12,12 +12,6 @@ import { GeneralAlerts } from "@/features/dashboard/GeneralAlerts";
 import { VencidosAlertBanner } from "@/features/dashboard/VencidosAlertBanner";
 import { useDashboardMetrics } from "@/features/dashboard/useDashboardMetrics";
 
-/**
- * Dashboard route — port of reference/legacy_vanilla (`#pg-dash`) +
- * js/dashboard.js `window.rebuildDashboard()`. See
- * useDashboardMetrics.ts for the derived-stats logic and roleTasks.ts
- * for the role-based task timeline content.
- */
 export default function Dashboard() {
   const { state } = useAppState();
   const navigate = useNavigate();
@@ -36,9 +30,6 @@ export default function Dashboard() {
             diseñado para auditores, coordinadores y aprobadores.
           </p>
         </div>
-        <Button onClick={() => navigate("/editor")}>
-          <Plus className="size-4" /> Nuevo documento
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
@@ -53,9 +44,6 @@ export default function Dashboard() {
               </CardTitle>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => navigate("/editor")}>
-                <FilePlus className="size-3.5" /> Nuevo
-              </Button>
               <Button size="sm" variant="outline" onClick={() => navigate("/documentos")}>
                 <Files className="size-3.5" /> Ver todos
               </Button>

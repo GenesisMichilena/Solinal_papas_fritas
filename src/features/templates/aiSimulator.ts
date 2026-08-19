@@ -1,4 +1,4 @@
-import type { DocumentType } from "@/data/seed";
+import type { DocumentType, TemplateLevel } from "@/data/seed";
 
 export interface AITemplateProposal {
   name: string;
@@ -6,7 +6,21 @@ export interface AITemplateProposal {
   type: DocumentType;
   mandatory: string[];
   desc: string;
+  nivel: TemplateLevel;
+  clausulaIso: string;
+  periodicidadRevision: "Anual" | "Bienal" | "Semestral" | "No aplica";
 }
+
+/** `type` (clasificación operativa) y `nivel` (pirámide documental) casi
+ * siempre coinciden salvo Checklist, que documenta evidencia y por lo
+ * tanto se ubica como Registro en la pirámide. */
+const NIVEL_POR_TYPE: Record<DocumentType, TemplateLevel> = {
+  Procedimiento: "Procedimiento",
+  Política: "Política",
+  Manual: "Manual",
+  Instructivo: "Instructivo",
+  Checklist: "Registro",
+};
 
 const NORMA_KEYWORDS: Array<{ match: RegExp; norma: string }> = [
   { match: /22000|inocuidad|haccp|al[eé]rgen|plaga/i, norma: "ISO 22000:2018" },
@@ -45,5 +59,8 @@ export function simulateAIProposal(prompt: string): AITemplateProposal {
     type,
     mandatory: ["Alcance", "Responsabilidades", "Registros y evidencia", "Acciones correctivas"],
     desc: `Estructura sugerida por Copilot IA para "${cleanPrompt}" bajo ${norma}.`,
+    nivel: NIVEL_POR_TYPE[type],
+    clausulaIso: "",
+    periodicidadRevision: "Anual",
   };
 }

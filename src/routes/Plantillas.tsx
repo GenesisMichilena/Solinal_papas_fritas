@@ -8,6 +8,7 @@ import { TemplateCard } from "@/features/templates/TemplateCard";
 import { TemplateDetailDialog } from "@/features/templates/TemplateDetailDialog";
 import { NewTemplateDialog } from "@/features/templates/NewTemplateDialog";
 import { AIGeneratorPanel } from "@/features/templates/AIGeneratorPanel";
+import { CreateDocumentDialog } from "@/features/documents/CreateDocumentDialog";
 import type { AITemplateProposal } from "@/features/templates/aiSimulator";
 
 export default function Plantillas() {
@@ -15,6 +16,14 @@ export default function Plantillas() {
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [aiPrefill, setAiPrefill] = useState<AITemplateProposal | null>(null);
+  const [createDocOpen, setCreateDocOpen] = useState(false);
+  const [createDocTemplateKey, setCreateDocTemplateKey] = useState<string | undefined>();
+
+  function handleCreateDocument(templateKey: string) {
+    setSelectedTemplate(null);
+    setCreateDocTemplateKey(templateKey);
+    setCreateDocOpen(true);
+  }
 
   // Lector no tiene acceso a Plantillas en el legacy (js/navigation.js
   // lectorRestricted = ['edit', 'templates', 'audit', 'config']). El
@@ -91,8 +100,15 @@ export default function Plantillas() {
           <TemplateDetailDialog
             template={selectedTemplate}
             onOpenChange={(open) => !open && setSelectedTemplate(null)}
+            onCreateDocument={handleCreateDocument}
           />
           <NewTemplateDialog open={dialogOpen} onOpenChange={setDialogOpen} prefill={aiPrefill} />
+          <CreateDocumentDialog
+            open={createDocOpen}
+            onOpenChange={setCreateDocOpen}
+            initialMode="template"
+            initialTemplateKey={createDocTemplateKey}
+          />
         </>
       )}
     </div>

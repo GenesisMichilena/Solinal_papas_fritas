@@ -1,15 +1,3 @@
-/**
- * Compliance data derivations for the /cumplimiento route.
- *
- * The legacy prototype (reference/legacy_vanilla/js/dashboard.js →
- * calculateComplianceScores) only computed the three ISO score
- * percentages; the "Requisitos ISO Mapeados" grid on pg-comp
- * (SolinalGestiona_MVP.html#compliance-mapping-container) was a dead
- * placeholder — `<!-- Dinámico -->` with no renderer wired to it anywhere
- * in the legacy JS. Everything below the score formula is this feature's
- * own reasonable reconstruction, built ONLY from fields that already
- * exist in src/data/seed.ts (no invented documents/templates).
- */
 import { useMemo } from "react";
 import { useAppState } from "@/context/AppStateContext";
 import type { DocumentType, SolinalDocument } from "@/data/seed";
@@ -39,7 +27,6 @@ export interface ComplianceAlert {
   detail: string;
 }
 
-/** Ported verbatim from js/dashboard.js calculateComplianceScores(). */
 const NORMS = [
   {
     norma: "ISO 9001:2015",
@@ -64,12 +51,6 @@ const NORMS = [
   },
 ] as const;
 
-/**
- * Score → status color thresholds. Not specified anywhere in the legacy
- * app (the sc cards there just used fixed inline colors); this mapping is
- * an assumption made to satisfy the "status colors per score range"
- * requirement — flagged in the final report.
- */
 export function scoreStatus(score: number): ComplianceStatus {
   if (score >= 80) return "valid";
   if (score >= 50) return "warning";
@@ -116,13 +97,6 @@ function statusForDocs(docs: SolinalDocument[]): {
   };
 }
 
-/**
- * Requirement rows = union of every (norma, tipo) pair present across the
- * template catalog and the document library. A requirement is "valid" if
- * at least one approved, non-expired document backs it; "warning" if a
- * document exists but isn't approved (or is approved-but-vencido);
- * "danger" (orphan) if no document of that norma+type exists at all.
- */
 export function useRequirementMapping(): RequirementRow[] {
   const { state } = useAppState();
   return useMemo(() => {
@@ -156,6 +130,21 @@ export function useRequirementMapping(): RequirementRow[] {
         (a, b) => a.norma.localeCompare(b.norma) || a.type.localeCompare(b.type),
       );
   }, [state.documents, state.templates]);
+}
+
+export function useOrphanTemplates() {
+  const { state } = useAppState();
+  return useMemo(() => {
+    return state.templates.filter((t) => {
+      if (!t.documentoPadreKey) return false;
+      const padre = state.templates.find((p) => p.key === t.documentoPadreKey);
+      if (!padre) return true; // padre eliminado o mal referenciado
+      const padreTieneDocAprobado = state.documents.some(
+        (d) => d.norma === padre.norma && d.type === padre.type && d.estado === "Aprobado" && !d.vencido,
+      );
+      return !padreTieneDocAprobado;
+    });
+  }, [state.templates, state.documents]);
 }
 
 /**

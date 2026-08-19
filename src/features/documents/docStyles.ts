@@ -28,7 +28,14 @@
  *                    `--tag-checklist` / `--tag-checklist-bg` token pair in
  *                    src/styles.css, for consistency with the other 4.
  */
-import type { DocumentStatus, DocumentType, SolinalDocument } from "@/data/seed";
+import type { DocumentStatus, DocumentType, SolinalDocument, TemplateLevel } from "@/data/seed";
+
+/** Un Registro (ej. un Checklist ya firmado) es evidencia congelada: una
+ * vez firmado no debería poder editarse. Se deriva de `nivel` en vez de
+ * agregar un booleano redundante — ver ContentEditor.tsx / Editor.tsx. */
+export function esRegistroPorNivel(nivel: TemplateLevel | undefined): boolean {
+  return nivel === "Registro";
+}
 
 export const docTypeBadgeClass: Record<DocumentType, string> = {
   Procedimiento: "border-tag-technical/40 bg-tag-technical-bg text-tag-technical",

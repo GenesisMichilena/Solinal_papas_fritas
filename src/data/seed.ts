@@ -42,6 +42,30 @@ export interface SolinalDocument {
   content: string;
   signatures: string[];
   revisiones: string[];
+  /** Copiado desde `template.nivel` al crear el documento desde una plantilla. Determina si el contenido se bloquea tras la primera firma (ver docStyles.esRegistroPorNivel). */
+  nivel?: TemplateLevel;
+  /** Copiado desde la plantilla de origen al crear el documento; guía a Editor.tsx sobre quién debe firmar. */
+  rolesRequeridos?: {
+    elaborador: RoleName;
+    revisor: RoleName;
+    aprobador: RoleName;
+    dobleAprobacion: boolean;
+  };
+}
+
+/** Nivel jerárquico dentro de la pirámide documental del SGC (ISO 9001:2015 cláusula 7.5). */
+export type TemplateLevel =
+  | "Política"
+  | "Manual"
+  | "Procedimiento"
+  | "Instructivo"
+  | "Registro";
+
+export interface TemplateSection {
+  titulo: string;
+  /** Qué debe contener/lograr esta sección — no solo su nombre. */
+  proposito: string;
+  obligatoria: boolean;
 }
 
 export interface DocumentTemplate {
@@ -53,7 +77,30 @@ export interface DocumentTemplate {
   preview: string;
   /** Rich HTML, seeded into a new document's `content` on creation. */
   content: string;
+
+  /** @deprecated usar `secciones`. Se mantiene por compatibilidad con seed data y componentes existentes. */
   mandatory: string[];
+
+  /** Nivel en la pirámide documental. Distinto de `type`, que es la clasificación operativa. */
+  nivel: TemplateLevel;
+  /** Cláusula específica de la norma que este documento cubre, ej. "7.5.3", "8.5.1". */
+  clausulaIso: string;
+  /** Estructura real de secciones, con propósito de cada una. */
+  secciones: TemplateSection[];
+  /** Cada cuánto debe revisarse el documento creado desde esta plantilla. */
+  periodicidadRevision: "Anual" | "Bienal" | "Semestral" | "No aplica";
+  /** Tiempo mínimo de conservación del documento/registro, en años. */
+  tiempoRetencionAnios: number;
+  /** `key` de la plantilla superior en la pirámide documental. Ausente si es de nivel raíz (Política o Manual). */
+  documentoPadreKey?: string;
+  /** Roles que deben participar en el ciclo de vida de un documento creado desde esta plantilla. */
+  rolesRequeridos: {
+    elaborador: RoleName;
+    revisor: RoleName;
+    aprobador: RoleName;
+    /** Si true, replica la regla de doble firma que ya existe para `critico` en SolinalDocument. */
+    dobleAprobacion: boolean;
+  };
 }
 
 export interface AuditLogEntry {
@@ -227,6 +274,23 @@ export const seedTemplates: DocumentTemplate[] = [
     preview: "Incluye alcance, responsables, registros y control de cambios.",
     content: "<ol><li>Alcance</li><li>Responsabilidades</li><li>Recursos y controles</li><li>Registro de calidad</li><li>Control de cambios</li></ol>",
     mandatory: ["Alcance", "Responsabilidades"],
+    nivel: "Procedimiento",
+    clausulaIso: "7.5.1",
+    periodicidadRevision: "Anual",
+    tiempoRetencionAnios: 3,
+    rolesRequeridos: {
+      elaborador: "Elaborador",
+      revisor: "Revisor",
+      aprobador: "Aprobador",
+      dobleAprobacion: false,
+    },
+    secciones: [
+      { titulo: "Alcance", proposito: "Delimitar a qué procesos, áreas o productos aplica el documento.", obligatoria: true },
+      { titulo: "Responsabilidades", proposito: "Definir quién ejecuta, revisa y aprueba cada actividad descrita.", obligatoria: true },
+      { titulo: "Recursos y controles", proposito: "Listar recursos necesarios y puntos de control del proceso.", obligatoria: false },
+      { titulo: "Registro de calidad", proposito: "Indicar qué evidencia se genera y dónde se almacena.", obligatoria: true },
+      { titulo: "Control de cambios", proposito: "Historial de versiones y motivo de cada cambio.", obligatoria: true },
+    ],
   },
   {
     key: "politica",
@@ -237,6 +301,23 @@ export const seedTemplates: DocumentTemplate[] = [
     preview: "Incluye firma obligatoria, revisión anual y autoridad responsable.",
     content: "<ol><li>Objetivo</li><li>Alcance</li><li>Declaración de política</li><li>Responsabilidades</li><li>Revisión y firma</li></ol>",
     mandatory: ["Declaración de política", "Firma"],
+    nivel: "Política",
+    clausulaIso: "5.2",
+    periodicidadRevision: "Anual",
+    tiempoRetencionAnios: 5,
+    rolesRequeridos: {
+      elaborador: "Elaborador",
+      revisor: "Revisor",
+      aprobador: "Aprobador",
+      dobleAprobacion: true,
+    },
+    secciones: [
+      { titulo: "Objetivo", proposito: "Explicar el propósito general de la política.", obligatoria: false },
+      { titulo: "Alcance", proposito: "Delimitar a qué áreas y personal aplica.", obligatoria: false },
+      { titulo: "Declaración de política", proposito: "Enunciar el compromiso formal de la dirección.", obligatoria: true },
+      { titulo: "Responsabilidades", proposito: "Definir quién difunde y sostiene el cumplimiento de la política.", obligatoria: false },
+      { titulo: "Revisión y firma", proposito: "Registrar la aprobación de la dirección y la periodicidad de revisión.", obligatoria: true },
+    ],
   },
   {
     key: "checklist",
@@ -247,6 +328,22 @@ export const seedTemplates: DocumentTemplate[] = [
     preview: "Incluye puntos de control, evidencia y responsables de verificación.",
     content: "<ol><li>Inspección de calidad</li><li>Verificación de temperatura</li><li>Confirmación de proveedores</li><li>Registro de no conformidades</li></ol>",
     mandatory: ["Puntos de control"],
+    nivel: "Registro",
+    clausulaIso: "8.5.1",
+    periodicidadRevision: "Semestral",
+    tiempoRetencionAnios: 2,
+    rolesRequeridos: {
+      elaborador: "Elaborador",
+      revisor: "Revisor",
+      aprobador: "Aprobador",
+      dobleAprobacion: false,
+    },
+    secciones: [
+      { titulo: "Inspección de calidad", proposito: "Punto de control verificable con evidencia de cumplimiento.", obligatoria: true },
+      { titulo: "Verificación de temperatura", proposito: "Punto de control verificable con evidencia de cumplimiento.", obligatoria: true },
+      { titulo: "Confirmación de proveedores", proposito: "Punto de control verificable con evidencia de cumplimiento.", obligatoria: true },
+      { titulo: "Registro de no conformidades", proposito: "Evidencia de desvíos detectados y su seguimiento.", obligatoria: true },
+    ],
   },
   {
     key: "instructivo",
@@ -257,6 +354,24 @@ export const seedTemplates: DocumentTemplate[] = [
     preview: "Incluye pasos, herramientas necesarias y evidencia de control.",
     content: "<ol><li>Preparación</li><li>Enjuague inicial</li><li>Aplicación de detergente</li><li>Enjuague final</li><li>Verificación de limpieza</li></ol>",
     mandatory: ["Pasos de limpieza"],
+    nivel: "Instructivo",
+    clausulaIso: "8.5.1",
+    periodicidadRevision: "Anual",
+    tiempoRetencionAnios: 3,
+    documentoPadreKey: "procedimiento",
+    rolesRequeridos: {
+      elaborador: "Elaborador",
+      revisor: "Revisor",
+      aprobador: "Aprobador",
+      dobleAprobacion: false,
+    },
+    secciones: [
+      { titulo: "Preparación", proposito: "Condiciones y equipo necesarios antes de iniciar la limpieza.", obligatoria: true },
+      { titulo: "Enjuague inicial", proposito: "Paso operativo de la secuencia de limpieza.", obligatoria: true },
+      { titulo: "Aplicación de detergente", proposito: "Paso operativo de la secuencia de limpieza.", obligatoria: true },
+      { titulo: "Enjuague final", proposito: "Paso operativo de la secuencia de limpieza.", obligatoria: true },
+      { titulo: "Verificación de limpieza", proposito: "Evidencia de que la limpieza cumplió el estándar esperado.", obligatoria: true },
+    ],
   },
 ];
 
